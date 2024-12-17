@@ -4,14 +4,14 @@
   "description": "A comprehensive blockchain wallet address validator",
   "packageManager": "pnpm@8.10.0",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -19,8 +19,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "prepublishOnly": "pnpm run build",
     "prepare": "husky install",
-    "size": "size-limit",
-    "analyze": "size-limit --why"
+    "size": "pnpm build && size-limit",
+    "analyze": "pnpm build && size-limit --why"
   },
   "repository": {
     "type": "git",
@@ -55,6 +55,8 @@
     "ethereum-cryptography": "^2.1.2"
   },
   "devDependencies": {
+    "@size-limit/esbuild": "^11.0.1",
+    "@size-limit/esbuild-why": "^11.0.1",
     "@size-limit/preset-small-lib": "^11.0.1",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
@@ -79,15 +81,5 @@
       "eslint --fix",
       "prettier --write"
     ]
-  },
-  "size-limit": [
-    {
-      "path": "dist/index.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/index.mjs",
-      "limit": "10 KB"
-    }
-  ]
+  }
 }
