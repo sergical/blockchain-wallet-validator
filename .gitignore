@@ -27,3 +27,7 @@ coverage/
 
 # Test coverage
 coverage/ 
+
+# Esbuild visualizer
+esbuild-why-cjs.html
+esbuild-why-esm.html

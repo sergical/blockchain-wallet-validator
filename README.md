@@ -174,7 +174,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Requirements
 
-- Node.js >= 14
+- Node.js >= 16
 - pnpm >= 8.10.0 (recommended) or npm/yarn
 
 ## Security
