@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A comprehensive blockchain wallet address validator",
   "packageManager": "pnpm@8.10.0",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
