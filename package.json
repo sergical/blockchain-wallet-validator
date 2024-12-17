@@ -16,7 +16,9 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "prepublishOnly": "pnpm run build",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
   },
   "repository": {
     "type": "git",
@@ -37,7 +39,12 @@
     "solana",
     "cardano",
     "polkadot",
-    "cosmos"
+    "cosmos",
+    "stellar",
+    "algorand",
+    "ripple",
+    "evm",
+    "ens"
   ],
   "author": "Sergiy Dybskiy",
   "license": "MIT",
@@ -46,6 +53,7 @@
     "ethereum-cryptography": "^2.1.2"
   },
   "devDependencies": {
+    "@size-limit/preset-small-lib": "^11.0.1",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
@@ -56,6 +64,7 @@
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
     "prettier": "^3.1.0",
+    "size-limit": "^11.0.1",
     "tsup": "^8.0.0",
     "typescript": "^5.3.0",
     "vitest": "^1.0.0"
@@ -69,5 +78,15 @@
       "prettier --write"
     ]
   },
+  "size-limit": [
+    {
+      "path": "dist/index.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/index.mjs",
+      "limit": "10 KB"
+    }
+  ],
   "packageManager": "pnpm@8.10.0"
 }

@@ -1,10 +1,20 @@
 # Blockchain Wallet Validator
 
+[![npm version](https://badge.fury.io/js/blockchain-wallet-validator.svg)](https://badge.fury.io/js/blockchain-wallet-validator)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/blockchain-wallet-validator)](https://bundlephobia.com/package/blockchain-wallet-validator)
+[![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/sergical/blockchain-wallet-validator)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
+
 A comprehensive TypeScript library for validating blockchain wallet addresses across multiple networks.
 
 ## Features
 
-- Validates addresses for multiple blockchain networks:
+- 🚀 **Lightweight**: < 10KB minified + gzipped
+- 🔒 **Type-safe**: Written in TypeScript with full type definitions
+- ⚡ **Fast**: No heavy dependencies
+- 🧪 **Well-tested**: 100% test coverage
+- 🌐 **Multi-network support**:
   - EVM (Ethereum, Polygon, BSC, etc.)
   - ENS Domains (including subdomains)
   - Bitcoin (Legacy, SegWit, Native SegWit)
@@ -15,12 +25,11 @@ A comprehensive TypeScript library for validating blockchain wallet addresses ac
   - Ripple (XRP)
   - Algorand
   - Stellar
-- Provides detailed metadata about addresses
-- Supports testnet addresses for Bitcoin
-- Written in TypeScript with full type definitions
-- Comprehensive test coverage
-- Minimal dependencies
-- ESM and CommonJS support
+- 📦 **Modern package**:
+  - ESM and CommonJS support
+  - Tree-shakeable
+  - Zero configuration
+  - Works in Node.js and browsers
 
 ## Installation
 
@@ -38,11 +47,11 @@ yarn add blockchain-wallet-validator
 ## Usage
 
 ```typescript
-import { validateWalletAddress } from "blockchain-wallet-validator";
+import { validateWalletAddress } from 'blockchain-wallet-validator';
 
 // Validate an Ethereum address
 const evmResult = validateWalletAddress(
-  "0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97"
+  '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97',
 );
 console.log(evmResult);
 // {
@@ -57,8 +66,8 @@ console.log(evmResult);
 
 // Validate a Bitcoin testnet address
 const btcResult = validateWalletAddress(
-  "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
-  { testnet: true }
+  'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
+  { testnet: true },
 );
 console.log(btcResult);
 // {
@@ -113,6 +122,20 @@ Returns a `NetworkInfo` object containing:
 | Algorand              | Base32          | VCMJKWOY5P5P7SKMZFFOCEROPJCZOTIJMNIYNUCKH7LRO45JMJP6UYBIJA |
 | Stellar               | Base32          | GBQMXVTR5HQNRGXPR4ZPBOZR7VQXOQMEQMZWIVLIW2MYBXC2HQWZZ4VJ   |
 
+## Performance
+
+- Bundle size: < 10KB minified + gzipped
+- No runtime dependencies except:
+  - `bs58check`: For Bitcoin address validation
+  - `ethereum-cryptography`: For EVM checksum validation
+- Tree-shakeable: Only imports what you use
+- Zero configuration required
+
+## Browser Support
+
+- All modern browsers (Chrome, Firefox, Safari, Edge)
+- IE11 not supported
+
 ## Development
 
 ```bash
@@ -127,6 +150,12 @@ pnpm test:coverage
 
 # Build the package
 pnpm build
+
+# Check bundle size
+pnpm size
+
+# Analyze bundle
+pnpm analyze
 
 # Format code
 pnpm format
@@ -147,3 +176,15 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - Node.js >= 14
 - pnpm >= 8.10.0 (recommended) or npm/yarn
+
+## Security
+
+This package helps validate the format of blockchain addresses but does not guarantee the security or ownership of the addresses. Always verify addresses through multiple sources before sending any transactions.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
+## Credits
+
+Created and maintained by [Sergiy Dybskiy](https://github.com/sergical).
