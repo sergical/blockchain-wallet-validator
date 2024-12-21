@@ -25,6 +25,7 @@ A comprehensive TypeScript library for validating blockchain wallet addresses ac
   - Ripple (XRP)
   - Algorand
   - Stellar
+  - Core (ICAN)
 - 📦 **Modern package**:
   - ESM and CommonJS support
   - Tree-shakeable
@@ -121,6 +122,7 @@ Returns a `NetworkInfo` object containing:
 | Ripple                | Base58          | rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh                         |
 | Algorand              | Base32          | VCMJKWOY5P5P7SKMZFFOCEROPJCZOTIJMNIYNUCKH7LRO45JMJP6UYBIJA |
 | Stellar               | Base32          | GBQMXVTR5HQNRGXPR4ZPBOZR7VQXOQMEQMZWIVLIW2MYBXC2HQWZZ4VJ   |
+| Core                  | ICAN            | cb7147879011ea207df5b35a24ca6f0859dcfb145999               |
 
 ## Performance
 
