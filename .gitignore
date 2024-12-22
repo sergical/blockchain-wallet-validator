@@ -26,8 +26,13 @@ coverage/
 *.tsbuildinfo
 
 # Test coverage
-coverage/ 
+coverage/
 
 # Esbuild visualizer
 esbuild-why-cjs.html
 esbuild-why-esm.html
+
+# Lock files
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
