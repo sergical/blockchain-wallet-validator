@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Enhancements
 
 - Added support for Core (ICAN) [PR](https://github.com/sergical/blockchain-wallet-validator/pull/3)
+- Added support for Node.js 16
 
 ## [1.0.0] - 2024-12-17
 
