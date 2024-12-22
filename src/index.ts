@@ -290,8 +290,7 @@ export function validateWalletAddress(
     return {
       network: 'x' + address.slice(0, 2).toLowerCase(),
       isValid: isChecksumValid,
-      description:
-        'ICAN address for Core blockchain networks',
+      description: 'ICAN address for Core blockchain networks',
       metadata: {
         isChecksumValid,
         format: 'ican',
@@ -353,20 +352,24 @@ function validateICANChecksum(address: string): boolean {
   const rearranged = address.slice(4) + address.slice(0, 4);
 
   // Convert letters to numbers (A=10, B=11, etc)
-  const converted = rearranged.split('').map(char => {
-    const code = char.charCodeAt(0);
-    // If it's a letter (A-Z)
-    if (code >= 65 && code <= 90) {
-      return (code - 65 + 10).toString();
-    }
-    return char;
-  }).join('');
+  const converted = rearranged
+    .split('')
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      // If it's a letter (A-Z)
+      if (code >= 65 && code <= 90) {
+        return (code - 65 + 10).toString();
+      }
+      return char;
+    })
+    .join('');
 
   // Calculate MOD-97 of the resulting number
   let remainder = converted;
   while (remainder.length > 2) {
     const block = remainder.slice(0, 9);
-    remainder = (parseInt(block, 10) % 97).toString() + remainder.slice(block.length);
+    remainder =
+      (parseInt(block, 10) % 97).toString() + remainder.slice(block.length);
   }
 
   // Valid ICAN addresses should have a MOD-97 result of 1

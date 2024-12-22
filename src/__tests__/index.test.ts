@@ -310,7 +310,7 @@ describe('validateWalletAddress', () => {
 
     test.each(validAddresses)(
       'validates $description address',
-      ({ address, network, description }) => {
+      ({ address, network }) => {
         const result = validateWalletAddress(address);
         expect(result.network).toBe(network);
         expect(result.isValid).toBe(true);
@@ -339,7 +339,7 @@ describe('validateWalletAddress', () => {
         'ab792215c43fc213c02182c8389f2bc32408e2c50921', // changed last digit
       ];
 
-      invalidChecksums.forEach(address => {
+      invalidChecksums.forEach((address) => {
         const result = validateWalletAddress(address);
         expect(result.isValid).toBe(false);
         expect(result.metadata?.isChecksumValid).toBe(false);
@@ -353,7 +353,7 @@ describe('validateWalletAddress', () => {
         'ab', // too short
       ];
 
-      invalidLengths.forEach(address => {
+      invalidLengths.forEach((address) => {
         const result = validateWalletAddress(address);
         expect(result.isValid).toBe(false);
         expect(result.description).toContain('Unknown address format');
@@ -367,11 +367,11 @@ describe('validateWalletAddress', () => {
         'ab79221$c43fc213c02182c8389f2bc32408e2c50922', // $ is not hex
       ];
 
-      invalidCharacters.forEach(address => {
+      invalidCharacters.forEach((address) => {
         const result = validateWalletAddress(address);
         expect(result.isValid).toBe(false);
         expect(result.description).toMatch(
-          /(Unknown address format|Contains invalid characters)/
+          /(Unknown address format|Contains invalid characters)/,
         );
       });
     });
@@ -383,7 +383,7 @@ describe('validateWalletAddress', () => {
         'ac792215c43fc213c02182c8389f2bc32408e2c50922', // ac is not valid
       ];
 
-      invalidPrefixes.forEach(address => {
+      invalidPrefixes.forEach((address) => {
         const result = validateWalletAddress(address);
         expect(result.network).toBe('unknown');
         expect(result.isValid).toBe(false);
