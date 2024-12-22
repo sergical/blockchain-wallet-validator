@@ -1,6 +1,6 @@
 # These owners will be the default owners for everything in
 # the repo. Unless a later match takes precedence,
-# @sergical will be requested for review when someone 
+# @sergical will be requested for review when someone
 # opens a pull request.
 *       @sergical
 
@@ -15,4 +15,4 @@ pnpm-lock.yaml  @sergical
 /src/__tests__/ @sergical
 
 # GitHub specific files
-/.github/       @sergical 
+/.github/       @sergical
