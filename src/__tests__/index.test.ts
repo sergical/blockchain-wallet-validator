@@ -288,4 +288,106 @@ describe('validateWalletAddress', () => {
       expect(result.isValid).toBe(true);
     });
   });
+
+  describe('ICAN Addresses', () => {
+    const validAddresses = [
+      {
+        address: 'cb7147879011ea207df5b35a24ca6f0859dcfb145999',
+        network: 'xcb',
+        description: 'Core blockchain mainnet',
+      },
+      {
+        address: 'ce450000000000000000000000000000000000000000',
+        network: 'xce',
+        description: 'Core blockchain enterprise',
+      },
+      {
+        address: 'ab792215c43fc213c02182c8389f2bc32408e2c50922',
+        network: 'xab',
+        description: 'Core blockchain testnet',
+      },
+    ];
+
+    test.each(validAddresses)(
+      'validates $description address',
+      ({ address, network }) => {
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe(network);
+        expect(result.isValid).toBe(true);
+        expect(result.description).toContain('ICAN address');
+        expect(result.metadata?.format).toBe('ican');
+        expect(result.metadata?.isChecksumValid).toBe(true);
+      },
+    );
+
+    test('handles case insensitivity', () => {
+      const lowercaseResult = validateWalletAddress(
+        'cb7147879011ea207df5b35a24ca6f0859dcfb145999',
+      );
+      const uppercaseResult = validateWalletAddress(
+        'CB7147879011EA207DF5B35A24CA6F0859DCFB145999',
+      );
+
+      expect(lowercaseResult.isValid).toBe(true);
+      expect(uppercaseResult.isValid).toBe(true);
+    });
+
+    test('invalidates addresses with incorrect checksums', () => {
+      const invalidChecksums = [
+        'cb7147879011ea207df5b35a24ca6f0859dcfb145990', // changed last digit
+        'ce450000000000000000000000000000000000000001', // changed last digit
+        'ab792215c43fc213c02182c8389f2bc32408e2c50921', // changed last digit
+      ];
+
+      invalidChecksums.forEach((address) => {
+        const result = validateWalletAddress(address);
+        expect(result.isValid).toBe(false);
+        expect(result.metadata?.isChecksumValid).toBe(false);
+      });
+    });
+
+    test('invalidates addresses with incorrect length', () => {
+      const invalidLengths = [
+        'cb7147', // too short
+        'ce45000000000000000000000000000000000000000000', // too long
+        'ab', // too short
+      ];
+
+      invalidLengths.forEach((address) => {
+        const result = validateWalletAddress(address);
+        expect(result.isValid).toBe(false);
+        expect(result.description).toContain('Unknown address format');
+      });
+    });
+
+    test('invalidates addresses with invalid characters', () => {
+      const invalidCharacters = [
+        'cbG147879011ea207df5b35a24ca6f0859dcfb145999', // G is not hex
+        'ce45000000000000000000000000000000000000000g', // g is not hex
+        'ab79221$c43fc213c02182c8389f2bc32408e2c50922', // $ is not hex
+      ];
+
+      invalidCharacters.forEach((address) => {
+        const result = validateWalletAddress(address);
+        expect(result.isValid).toBe(false);
+        expect(result.description).toMatch(
+          /(Unknown address format|Contains invalid characters)/,
+        );
+      });
+    });
+
+    test('invalidates addresses with invalid prefixes', () => {
+      const invalidPrefixes = [
+        'cc7147879011ea207df5b35a24ca6f0859dcfb145999', // cc is not valid
+        'cf450000000000000000000000000000000000000000', // cf is not valid
+        'ac792215c43fc213c02182c8389f2bc32408e2c50922', // ac is not valid
+      ];
+
+      invalidPrefixes.forEach((address) => {
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe('unknown');
+        expect(result.isValid).toBe(false);
+      });
+    });
+  });
 });
