@@ -76,18 +76,20 @@ describe('validateWalletAddress', () => {
 
     test('invalidates ENS domains with invalid emoji patterns', () => {
       const invalidEmojiDomains = [
-        '🦊..eth',           // consecutive dots
-        ' 🦊.eth',           // leading space
-        '🦊.eth ',           // trailing space
-        '🦊 crypto.eth',     // space in middle
-        '.🦊.eth',           // leading dot
-        '🦊.eth.',           // trailing dot
+        '🦊..eth', // consecutive dots
+        ' 🦊.eth', // leading space
+        '🦊.eth ', // trailing space
+        '🦊 crypto.eth', // space in middle
+        '.🦊.eth', // leading dot
+        '🦊.eth.', // trailing dot
       ];
 
       invalidEmojiDomains.forEach((domain) => {
         const result = validateWalletAddress(domain);
         expect(result.isValid).toBe(false);
-        expect(result.description).toMatch(/(Invalid ENS domain format|Contains invalid characters)/);
+        expect(result.description).toMatch(
+          /(Invalid ENS domain format|Contains invalid characters)/,
+        );
       });
     });
 
@@ -198,7 +200,7 @@ describe('validateWalletAddress', () => {
         address: '1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu',
         format: 'Legacy',
         network: 'bitcoin',
-        compatibleWith: ['bitcoincash']
+        compatibleWith: ['bitcoincash'],
       },
       {
         address: 'bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a',
@@ -217,13 +219,15 @@ describe('validateWalletAddress', () => {
         expect(result.metadata?.format).toBe(format);
 
         if (compatibleWith) {
-          expect(result.metadata?.compatibleWith).toEqual(expect.arrayContaining(compatibleWith));
+          expect(result.metadata?.compatibleWith).toEqual(
+            expect.arrayContaining(compatibleWith),
+          );
         }
 
         if (format === 'CashAddr') {
           expect(result.metadata?.printFormat).toBe(printFormat);
           expect(result.metadata?.electronicFormat).toBe(
-            printFormat?.replace('bitcoincash:', '')
+            printFormat?.replace('bitcoincash:', ''),
           );
         }
       },
@@ -266,10 +270,10 @@ describe('validateWalletAddress', () => {
       expect(result.network).toBe('xcb');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.printFormat).toBe(
-        'CB71\u00A04787\u00A09011\u00A0EA20\u00A07DF5\u00A0B35A\u00A024CA\u00A06F08\u00A059DC\u00A0FB14\u00A05999'
+        'CB71\u00A04787\u00A09011\u00A0EA20\u00A07DF5\u00A0B35A\u00A024CA\u00A06F08\u00A059DC\u00A0FB14\u00A05999',
       );
       expect(result.metadata?.electronicFormat).toBe(
-        'CB7147879011EA207DF5B35A24CA6F0859DCFB145999'
+        'CB7147879011EA207DF5B35A24CA6F0859DCFB145999',
       );
     });
   });
@@ -429,22 +433,25 @@ describe('validateWalletAddress', () => {
         address: 'cb7147879011ea207df5b35a24ca6f0859dcfb145999',
         network: 'xcb',
         description: 'Core blockchain mainnet',
-        printFormat: 'CB71\u00A04787\u00A09011\u00A0EA20\u00A07DF5\u00A0B35A\u00A024CA\u00A06F08\u00A059DC\u00A0FB14\u00A05999',
-        electronicFormat: 'CB7147879011EA207DF5B35A24CA6F0859DCFB145999'
+        printFormat:
+          'CB71\u00A04787\u00A09011\u00A0EA20\u00A07DF5\u00A0B35A\u00A024CA\u00A06F08\u00A059DC\u00A0FB14\u00A05999',
+        electronicFormat: 'CB7147879011EA207DF5B35A24CA6F0859DCFB145999',
       },
       {
         address: 'ce450000000000000000000000000000000000000000',
         network: 'xce',
         description: 'Core blockchain enterprise',
-        printFormat: 'CE45\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000',
-        electronicFormat: 'CE450000000000000000000000000000000000000000'
+        printFormat:
+          'CE45\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000',
+        electronicFormat: 'CE450000000000000000000000000000000000000000',
       },
       {
         address: 'ab792215c43fc213c02182c8389f2bc32408e2c50922',
         network: 'xab',
         description: 'Core blockchain testnet',
-        printFormat: 'AB79\u00A02215\u00A0C43F\u00A0C213\u00A0C021\u00A082C8\u00A0389F\u00A02BC3\u00A02408\u00A0E2C5\u00A00922',
-        electronicFormat: 'AB792215C43FC213C02182C8389F2BC32408E2C50922'
+        printFormat:
+          'AB79\u00A02215\u00A0C43F\u00A0C213\u00A0C021\u00A082C8\u00A0389F\u00A02BC3\u00A02408\u00A0E2C5\u00A00922',
+        electronicFormat: 'AB792215C43FC213C02182C8389F2BC32408E2C50922',
       },
     ];
 
@@ -463,7 +470,8 @@ describe('validateWalletAddress', () => {
 
     test('handles case insensitivity while maintaining correct formats', () => {
       const address = 'cb7147879011ea207df5b35a24ca6f0859dcfb145999';
-      const expectedPrint = 'CB71\u00A04787\u00A09011\u00A0EA20\u00A07DF5\u00A0B35A\u00A024CA\u00A06F08\u00A059DC\u00A0FB14\u00A05999';
+      const expectedPrint =
+        'CB71\u00A04787\u00A09011\u00A0EA20\u00A07DF5\u00A0B35A\u00A024CA\u00A06F08\u00A059DC\u00A0FB14\u00A05999';
       const expectedElectronic = 'CB7147879011EA207DF5B35A24CA6F0859DCFB145999';
 
       // Test lowercase input
@@ -479,7 +487,9 @@ describe('validateWalletAddress', () => {
       expect(upperResult.metadata?.electronicFormat).toBe(expectedElectronic);
 
       // Test mixed case input
-      const mixedResult = validateWalletAddress('cB7147879011eA207df5b35a24ca6f0859dcfb145999');
+      const mixedResult = validateWalletAddress(
+        'cB7147879011eA207df5b35a24ca6f0859dcfb145999',
+      );
       expect(mixedResult.isValid).toBe(true);
       expect(mixedResult.metadata?.printFormat).toBe(expectedPrint);
       expect(mixedResult.metadata?.electronicFormat).toBe(expectedElectronic);
@@ -547,22 +557,28 @@ describe('validateWalletAddress', () => {
     test('validates EVM addresses without requiring Buffer', () => {
       // Save original Buffer if it exists
       const originalBuffer = global.Buffer;
-      // @ts-ignore
+      // @ts-expect-error Intentionally removing Buffer to test browser compatibility
       delete global.Buffer;
 
       try {
         // Test checksum address
-        const checksumResult = validateWalletAddress('0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97');
+        const checksumResult = validateWalletAddress(
+          '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97',
+        );
         expect(checksumResult.network).toBe('evm');
         expect(checksumResult.isValid).toBe(true);
 
         // Test lowercase address
-        const lowercaseResult = validateWalletAddress('0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97');
+        const lowercaseResult = validateWalletAddress(
+          '0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97',
+        );
         expect(lowercaseResult.network).toBe('evm');
         expect(lowercaseResult.isValid).toBe(true);
 
         // Test invalid checksum
-        const invalidResult = validateWalletAddress('0x4838B106FCE9647BDF1E7877BF73CE8B0BAD5F97');
+        const invalidResult = validateWalletAddress(
+          '0x4838B106FCE9647BDF1E7877BF73CE8B0BAD5F97',
+        );
         expect(invalidResult.network).toBe('evm');
         expect(invalidResult.isValid).toBe(false);
       } finally {
@@ -572,25 +588,24 @@ describe('validateWalletAddress', () => {
     });
 
     test('validates Bitcoin addresses without requiring Buffer', () => {
-      // Save original Buffer if it exists
       const originalBuffer = global.Buffer;
-      // @ts-ignore
+      // @ts-expect-error Intentionally removing Buffer to test browser compatibility
       delete global.Buffer;
 
       try {
-        const result = validateWalletAddress('1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2');
+        const result = validateWalletAddress(
+          '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
+        );
         expect(result.network).toBe('bitcoin');
         expect(result.isValid).toBe(true);
       } finally {
-        // Restore Buffer
         global.Buffer = originalBuffer;
       }
     });
 
     test('validates all address types without Buffer dependency', () => {
-      // Save original Buffer if it exists
       const originalBuffer = global.Buffer;
-      // @ts-ignore
+      // @ts-expect-error Intentionally removing Buffer to test browser compatibility
       delete global.Buffer;
 
       try {
@@ -613,13 +628,12 @@ describe('validateWalletAddress', () => {
           'GBQMXVTR5HQNRGXPR4ZPBOZR7VQXOQMEQMZWIVLIW2MYBXC2HQWZZ4VJ', // Stellar
         ];
 
-        testAddresses.forEach(address => {
+        testAddresses.forEach((address) => {
           const result = validateWalletAddress(address);
           expect(result.isValid).toBe(true);
           expect(result.network).not.toBe('unknown');
         });
       } finally {
-        // Restore Buffer
         global.Buffer = originalBuffer;
       }
     });

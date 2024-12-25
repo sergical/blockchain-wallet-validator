@@ -16,7 +16,7 @@ interface ValidationOptions {
 
 function bytesToHex(bytes: Uint8Array): string {
   return Array.from(bytes)
-    .map(b => b.toString(16).padStart(2, '0'))
+    .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 }
 
@@ -62,7 +62,10 @@ export function validateWalletAddress(
       };
     }
 
-    const isChecksumValid = validateEVMChecksum(address, forceChecksumValidation);
+    const isChecksumValid = validateEVMChecksum(
+      address,
+      forceChecksumValidation,
+    );
     return {
       network: 'evm',
       isValid: isChecksumValid,
@@ -94,7 +97,11 @@ export function validateWalletAddress(
               : prefix === 'ab'
                 ? 'Devin'
                 : null,
-        printFormat: address.toUpperCase().match(/.{1,4}/g)?.join('\u00A0') || address.toUpperCase(),
+        printFormat:
+          address
+            .toUpperCase()
+            .match(/.{1,4}/g)
+            ?.join('\u00A0') || address.toUpperCase(),
         electronicFormat: address.toUpperCase(),
       },
     };
@@ -112,7 +119,7 @@ export function validateWalletAddress(
         metadata: {
           format: 'Legacy',
           isTestnet: false,
-          compatibleWith: ['bitcoincash']
+          compatibleWith: ['bitcoincash'],
         },
       };
     } catch {
@@ -351,7 +358,11 @@ export function validateWalletAddress(
   }
 
   // ENS Domain validation
-  if (/^[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+(?:\.[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+)*\.eth$/u.test(address)) {
+  if (
+    /^[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+(?:\.[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+)*\.eth$/u.test(
+      address,
+    )
+  ) {
     // Add additional character validation
     if (/[^a-zA-Z0-9-.]/.test(address.toLowerCase())) {
       // Check if it contains emojis (which are allowed)
@@ -360,7 +371,8 @@ export function validateWalletAddress(
         return {
           network: 'unknown',
           isValid: false,
-          description: 'Invalid ENS domain format - only ASCII letters, numbers, hyphens, and emojis are allowed',
+          description:
+            'Invalid ENS domain format - only ASCII letters, numbers, hyphens, and emojis are allowed',
         };
       }
     }
@@ -419,13 +431,19 @@ export function validateWalletAddress(
  * @param address The EVM address to validate
  * @returns boolean indicating if the checksum is valid
  */
-function validateEVMChecksum(address: string, forceValidation: boolean = false): boolean {
+function validateEVMChecksum(
+  address: string,
+  forceValidation: boolean = false,
+): boolean {
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
     return false;
   }
 
   // Skip validation for all-lowercase/uppercase unless forced
-  if (!forceValidation && (address === address.toLowerCase() || address === address.toUpperCase())) {
+  if (
+    !forceValidation &&
+    (address === address.toLowerCase() || address === address.toUpperCase())
+  ) {
     return true;
   }
 
@@ -437,8 +455,10 @@ function validateEVMChecksum(address: string, forceValidation: boolean = false):
   for (let i = 0; i < 40; i++) {
     const hashChar = parseInt(addressHash[i], 16);
     const addressChar = stripAddress[i];
-    if ((hashChar > 7 && addressChar.toUpperCase() !== addressChar) ||
-        (hashChar <= 7 && addressChar.toLowerCase() !== addressChar)) {
+    if (
+      (hashChar > 7 && addressChar.toUpperCase() !== addressChar) ||
+      (hashChar <= 7 && addressChar.toLowerCase() !== addressChar)
+    ) {
       return false;
     }
   }
@@ -457,16 +477,17 @@ function validateICANChecksum(address: string): boolean {
 
   const converted = rearranged
     .split('')
-    .map(char => {
+    .map((char) => {
       const code = char.charCodeAt(0);
-      return (code >= 65 && code <= 90) ? (code - 65 + 10).toString() : char;
+      return code >= 65 && code <= 90 ? (code - 65 + 10).toString() : char;
     })
     .join('');
 
   let remainder = converted;
   while (remainder.length > 2) {
     const block = remainder.slice(0, 9);
-    remainder = (parseInt(block, 10) % 97).toString() + remainder.slice(block.length);
+    remainder =
+      (parseInt(block, 10) % 97).toString() + remainder.slice(block.length);
   }
 
   return parseInt(remainder, 10) % 97 === 1;
