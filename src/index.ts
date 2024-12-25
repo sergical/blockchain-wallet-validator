@@ -33,7 +33,6 @@ export function validateWalletAddress(
 ): NetworkInfo {
   // Handle empty or invalid input
   if (!address || typeof address !== 'string') {
-    console.log('Failed at initial input validation');
     return {
       network: 'unknown',
       isValid: false,
@@ -43,7 +42,6 @@ export function validateWalletAddress(
 
   // Modify the character validation to allow any printable characters and emojis by default
   if (!/^[\p{L}\p{N}\p{P}\p{S}\p{Emoji}]+$/u.test(address)) {
-    console.log('Failed at character validation:', address);
     return {
       network: 'unknown',
       isValid: false,
