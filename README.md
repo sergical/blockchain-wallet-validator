@@ -15,17 +15,17 @@ A comprehensive TypeScript library for validating blockchain wallet addresses ac
 - ⚡ **Fast**: No heavy dependencies
 - 🧪 **Well-tested**: 100% test coverage
 - 🌐 **Multi-network support**:
-  - EVM (Ethereum, Polygon, BSC, etc.)
-  - ENS Domains (including subdomains)
+  - Algorand
   - Bitcoin (Legacy, SegWit, Native SegWit)
-  - Solana
-  - Cosmos ecosystem (Cosmos, Osmosis, Juno, etc.)
   - Cardano
+  - Core (ICAN)
+  - Cosmos ecosystem (Cosmos, Osmosis, Juno, etc.)
+  - ENS Domains (including subdomains and emoji support)
+  - EVM (Ethereum, Polygon, BSC, etc.)
   - Polkadot
   - Ripple (XRP)
-  - Algorand
+  - Solana
   - Stellar
-  - Core (ICAN)
 - 📦 **Modern package**:
   - ESM and CommonJS support
   - Tree-shakeable
@@ -80,6 +80,29 @@ console.log(btcResult);
 //     isTestnet: true
 //   }
 // }
+
+// Validate an ENS address with emoji
+const ensResult = validateWalletAddress('🦊.eth');
+console.log(ensResult);
+// {
+//   network: 'evm',
+//   isValid: true,
+//   description: 'Ethereum Name Service domain',
+//   metadata: {
+//     format: 'ens',
+//     isSubdomain: false,
+//     isEmoji: true
+//   }
+// }
+
+// Validate an ENS address with emoji disabled
+const ensResultNoEmoji = validateWalletAddress('🦊.eth', { emojiAllowed: false });
+console.log(ensResultNoEmoji);
+// {
+//   network: 'unknown',
+//   isValid: false,
+//   description: 'Emoji characters are not allowed in ENS domains'
+// }
 ```
 
 ## API Reference
@@ -94,6 +117,7 @@ Validates a blockchain wallet address and returns information about the network 
 - `options` (optional): Validation options
   - `testnet` (boolean): Whether to validate as a testnet address (currently only supported for Bitcoin)
   - `network` (string): Specify the expected network (future use)
+  - `emojiAllowed` (boolean): Whether to allow emoji characters in ENS domains (default: true)
 
 #### Returns
 
@@ -115,6 +139,10 @@ Returns a `NetworkInfo` object containing:
 | Bitcoin Legacy        | Base58 (1...)   | 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2                         |
 | Bitcoin SegWit        | Base58 (3...)   | 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy                         |
 | Bitcoin Native SegWit | Bech32 (bc1...) | bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq                 |
+| Bitcoin Cash          | CashAddr        | bitcoincash:qr7fzmep8g7h7ymfxy74lgc0v950j3r4ecr4wd9r3z     |
+| Litecoin Legacy       | Base58 (L...)   | LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz                         |
+| Litecoin SegWit       | Base58 (M...)   | MJRSgZ3UUFcTBTBAaN38XAXvHAaZe6TMbM                         |
+| Litecoin Native SegWit| Bech32 (ltc1...)| ltc1qgpn2phk8c7k966xjkz0p5zkf5w7rzeslwj42h                 |
 | Solana                | Base58          | DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy               |
 | Cosmos                | Bech32          | cosmos1yw6g44c4pqd2rxgrcqekxg9k8f4fd8xpx2k8c3              |
 | Cardano               | Bech32          | addr1...                                                   |
@@ -130,6 +158,7 @@ Returns a `NetworkInfo` object containing:
 - No runtime dependencies except:
   - `bs58check`: For Bitcoin address validation
   - `ethereum-cryptography`: For EVM checksum validation
+- No Buffer dependency (works in modern browsers without polyfills)
 - Tree-shakeable: Only imports what you use
 - Zero configuration required
 
