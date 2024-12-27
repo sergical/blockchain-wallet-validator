@@ -183,11 +183,13 @@ describe('validateWalletAddress', () => {
         `sub.${tooLongLabel}.eth`, // Label too long in subdomain
       ];
 
-      domains.forEach(domain => {
+      domains.forEach((domain) => {
         const result = validateWalletAddress(domain, { nsDomains: ['eth'] });
         expect(result.network).toBe('ns');
         expect(result.isValid).toBe(false);
-        expect(result.description).toBe('NS domain label exceeds maximum length of 63 characters');
+        expect(result.description).toBe(
+          'NS domain label exceeds maximum length of 63 characters',
+        );
       });
     });
 
@@ -195,10 +197,14 @@ describe('validateWalletAddress', () => {
       const longButValidLabel = 'a'.repeat(63); // Maximum valid label length
       const tooLongTotal = Array(5).fill(longButValidLabel).join('.'); // Creates a very long domain with dots
 
-      const result = validateWalletAddress(`${tooLongTotal}.eth`, { nsDomains: ['eth'] });
+      const result = validateWalletAddress(`${tooLongTotal}.eth`, {
+        nsDomains: ['eth'],
+      });
       expect(result.network).toBe('ns');
       expect(result.isValid).toBe(false);
-      expect(result.description).toBe('NS domain exceeds maximum total length of 255 characters');
+      expect(result.description).toBe(
+        'NS domain exceeds maximum total length of 255 characters',
+      );
     });
   });
 
@@ -864,14 +870,14 @@ describe('validateWalletAddress', () => {
         expect(longResult.isValid).toBe(false);
 
         // Test with various falsy values
-        [null, undefined, '', ' '].forEach(value => {
+        [null, undefined, '', ' '].forEach((value) => {
           const result = validateWalletAddress(value as any);
           expect(result.isValid).toBe(false);
           expect(result.network).toBe(null);
         });
 
         // Test with non-string types
-        [123, {}, [], true, false, () => {}].forEach(value => {
+        [123, {}, [], true, false, () => {}].forEach((value) => {
           const result = validateWalletAddress(value as any);
           expect(result.isValid).toBe(false);
           expect(result.network).toBe(null);
@@ -885,10 +891,16 @@ describe('validateWalletAddress', () => {
           { options: { nsDomains: ['eth'] }, expected: true },
           { options: { nsDomains: ['eth'], testnet: true }, expected: true },
           { options: { nsDomains: ['eth'], testnet: false }, expected: true },
-          { options: { nsDomains: ['eth'], emojiAllowed: true }, expected: true },
-          { options: { nsDomains: ['eth'], emojiAllowed: false }, expected: true },
+          {
+            options: { nsDomains: ['eth'], emojiAllowed: true },
+            expected: true,
+          },
+          {
+            options: { nsDomains: ['eth'], emojiAllowed: false },
+            expected: true,
+          },
           { options: { testnet: true }, expected: false },
-          { options: { emojiAllowed: true }, expected: false }
+          { options: { emojiAllowed: true }, expected: false },
         ];
 
         testCases.forEach(({ options, expected }) => {
@@ -903,23 +915,27 @@ describe('validateWalletAddress', () => {
           {
             options: { testnet: true, nsDomains: [] },
             expected: false,
-            description: 'Empty nsDomains array'
+            description: 'Empty nsDomains array',
           },
           {
             options: { testnet: true, nsDomains: ['eth'] },
             expected: true,
-            description: 'Standard options'
+            description: 'Standard options',
           },
           {
             options: { testnet: 'invalid' as any, nsDomains: ['eth'] },
             expected: false,
-            description: 'Invalid testnet option type'
+            description: 'Invalid testnet option type',
           },
           {
-            options: { testnet: true, nsDomains: ['eth'], unknownOption: true } as any,
+            options: {
+              testnet: true,
+              nsDomains: ['eth'],
+              unknownOption: true,
+            } as any,
             expected: true,
-            description: 'Unknown option'
-          }
+            description: 'Unknown option',
+          },
         ];
 
         testCases.forEach(({ options, expected, description }) => {
@@ -933,23 +949,23 @@ describe('validateWalletAddress', () => {
           {
             address: '\u0000invalid.eth',
             expected: false,
-            description: 'Null character'
+            description: 'Null character',
           },
           {
             address: 'invalid\uFEFFdomain.eth',
             expected: false,
-            description: 'Zero-width space'
+            description: 'Zero-width space',
           },
           {
             address: 'invalid\u200Bdomain.eth',
             expected: false,
-            description: 'Zero-width space'
+            description: 'Zero-width space',
           },
           {
             address: 'invalid\u200Edomain.eth',
             expected: false,
-            description: 'Left-to-right mark'
-          }
+            description: 'Left-to-right mark',
+          },
         ];
 
         testCases.forEach(({ address, expected, description }) => {
@@ -961,33 +977,46 @@ describe('validateWalletAddress', () => {
       test('handles all possible validation scenarios', () => {
         // Test with undefined options
         expect(validateWalletAddress('0x123')).toEqual(
-          expect.objectContaining({ isValid: false })
+          expect.objectContaining({ isValid: false }),
         );
 
         // Test with undefined options explicitly
         expect(validateWalletAddress('0x123', undefined)).toEqual(
-          expect.objectContaining({ isValid: false })
+          expect.objectContaining({ isValid: false }),
         );
 
         // Test with empty options
         expect(validateWalletAddress('0x123', {})).toEqual(
-          expect.objectContaining({ isValid: false })
+          expect.objectContaining({ isValid: false }),
         );
 
         // Test with invalid options type
         expect(validateWalletAddress('0x123', 'invalid' as any)).toEqual(
-          expect.objectContaining({ isValid: false })
+          expect.objectContaining({ isValid: false }),
         );
       });
 
       test('handles network filtering', () => {
-        // Test all network variations
+        // Change 'network' to '_network' since it's unused
         const networks = [
-          'evm', 'ns', 'sol', 'atom', 'btc', 'ltc',
-          'ada', 'dot', 'xrp', 'algo', 'xlm', 'xcb',
-          'xce', 'xab', null
+          'evm',
+          'ns',
+          'sol',
+          'atom',
+          'btc',
+          'ltc',
+          'ada',
+          'dot',
+          'xrp',
+          'algo',
+          'xlm',
+          'xcb',
+          'xce',
+          'xab',
+          null,
         ];
-        networks.forEach(network => {
+        networks.forEach((_network) => {
+          // Added underscore prefix
           const result = validateWalletAddress('invalid-address');
           expect(result.network).toBeOneOf([...networks]);
         });
@@ -998,10 +1027,10 @@ describe('validateWalletAddress', () => {
         const invalidHexAddresses = [
           '0x123g', // invalid hex
           '0xGHIJ', // invalid hex
-          '0x!@#$'  // invalid characters
+          '0x!@#$', // invalid characters
         ];
 
-        invalidHexAddresses.forEach(address => {
+        invalidHexAddresses.forEach((address) => {
           const result = validateWalletAddress(address);
           expect(result.isValid).toBe(false);
           expect(result.network).toBe('evm');
@@ -1012,12 +1041,12 @@ describe('validateWalletAddress', () => {
         const testCases = [
           {
             address: 'bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a',
-            format: 'CashAddr'
+            format: 'CashAddr',
           },
           {
             address: '1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu',
-            format: 'Legacy'
-          }
+            format: 'Legacy',
+          },
         ];
 
         testCases.forEach(({ address, format }) => {
@@ -1038,7 +1067,7 @@ describe('validateWalletAddress', () => {
           'ab79221*c43fc213c02182c8389f2bc32408e2c50922', // Invalid symbol
         ];
 
-        invalidAddresses.forEach(address => {
+        invalidAddresses.forEach((address) => {
           const result = validateWalletAddress(address);
           expect(result.isValid).toBe(false);
         });
@@ -1049,7 +1078,7 @@ describe('validateWalletAddress', () => {
         // Mock TextEncoder to throw error
         const originalTextEncoder = global.TextEncoder;
         // @ts-expect-error Intentionally breaking TextEncoder
-        global.TextEncoder = function() {
+        global.TextEncoder = function () {
           throw new Error('TextEncoder error');
         };
 
@@ -1072,7 +1101,7 @@ describe('validateWalletAddress', () => {
           'stake_test1invalid',
         ];
 
-        addresses.forEach(address => {
+        addresses.forEach((address) => {
           const result = validateWalletAddress(address);
           expect(result.network).toBe('ada');
           expect(result.isValid).toBe(false);
@@ -1102,7 +1131,9 @@ describe('validateWalletAddress', () => {
         expect(result1.isValid).toBe(true);
 
         // Test with non-matching networks
-        const result2 = validateWalletAddress(address, { network: ['btc', 'ltc'] });
+        const result2 = validateWalletAddress(address, {
+          network: ['btc', 'ltc'],
+        });
         expect(result2.isValid).toBe(false);
 
         // Test with null network option
@@ -1122,14 +1153,18 @@ describe('validateWalletAddress', () => {
           'tltc1conflictaddress',
         ];
 
-        conflictingAddresses.forEach(address => {
+        conflictingAddresses.forEach((address) => {
           // When filtering for Solana addresses
-          const solResult = validateWalletAddress(address, { network: ['sol'] });
+          const solResult = validateWalletAddress(address, {
+            network: ['sol'],
+          });
           expect(solResult.isValid).toBe(false);
           expect(solResult.network).toBe(null);
 
           // When filtering for Polkadot addresses
-          const dotResult = validateWalletAddress(address, { network: ['dot'] });
+          const dotResult = validateWalletAddress(address, {
+            network: ['dot'],
+          });
           expect(dotResult.isValid).toBe(false);
           expect(dotResult.network).toBe(null);
         });
@@ -1188,8 +1223,8 @@ describe('Utility Functions', () => {
     test('handles invalid options', () => {
       const address = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
       const invalidOptions = [
-        {},  // empty object should work
-        undefined,  // undefined should use default options
+        {}, // empty object should work
+        undefined, // undefined should use default options
       ];
 
       invalidOptions.forEach((options) => {
@@ -1268,9 +1303,14 @@ describe('Utility Functions', () => {
           const result = validateWalletAddress(domain, options);
           if (!options.nsDomains?.length) {
             expect(result.isValid).toBe(false);
-          } else if (options.emojiAllowed === false && domain.match(/\p{Extended_Pictographic}/u)) {
+          } else if (
+            options.emojiAllowed === false &&
+            domain.match(/\p{Extended_Pictographic}/u)
+          ) {
             expect(result.isValid).toBe(false);
-            expect(result.description).toBe('Emoji characters are disabled in NS domains');
+            expect(result.description).toBe(
+              'Emoji characters are disabled in NS domains',
+            );
           }
         });
       });
@@ -1344,14 +1384,9 @@ describe('Hex Validation', () => {
   });
 
   test('handles various hex values', () => {
-    const hexAddresses = [
-      '0xff00',
-      '0x0000',
-      '0xffff',
-      '0x1234'
-    ];
+    const hexAddresses = ['0xff00', '0x0000', '0xffff', '0x1234'];
 
-    hexAddresses.forEach(address => {
+    hexAddresses.forEach((address) => {
       const result = validateWalletAddress(address);
       expect(result.network).toBe('evm');
       expect(result.isValid).toBe(false);
@@ -1364,13 +1399,15 @@ describe('Edge Cases and Corner Cases', () => {
     const addresses = [
       'BiTcOiNcAsH:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a',
       'Bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
-      'TlTc1qk2ergl0hvg8g8r89nwqjl6m6k76rgwsh95qm9d'
+      'TlTc1qk2ergl0hvg8g8r89nwqjl6m6k76rgwsh95qm9d',
     ];
 
-    addresses.forEach(address => {
+    addresses.forEach((address) => {
       const result = validateWalletAddress(address);
       expect(result.isValid).toBe(false);
-      expect(result.description).toMatch(/Invalid .* format|Unknown address format/);
+      expect(result.description).toMatch(
+        /Invalid .* format|Unknown address format/,
+      );
     });
   });
 
@@ -1378,13 +1415,15 @@ describe('Edge Cases and Corner Cases', () => {
     const addresses = [
       '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed\u200B',
       '\u200E0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
-      '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed\uFEFF'
+      '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed\uFEFF',
     ];
 
-    addresses.forEach(address => {
+    addresses.forEach((address) => {
       const result = validateWalletAddress(address);
       expect(result.isValid).toBe(false);
-      expect(result.description).toMatch(/Invalid .* format|Unknown address format/);
+      expect(result.description).toMatch(
+        /Invalid .* format|Unknown address format/,
+      );
     });
   });
 });
@@ -1397,7 +1436,7 @@ describe('Network-Specific Edge Cases', () => {
         '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAedd', // one character long
       ];
 
-      addresses.forEach(address => {
+      addresses.forEach((address) => {
         const result = validateWalletAddress(address);
         expect(result.network).toBe('evm');
         expect(result.isValid).toBe(false);
@@ -1408,12 +1447,9 @@ describe('Network-Specific Edge Cases', () => {
   describe('NS Domains', () => {
     test('handles NS domains with maximum length components', () => {
       const longLabel = 'a'.repeat(63); // Maximum length for a DNS label
-      const domains = [
-        `${longLabel}.eth`,
-        `${longLabel}.${longLabel}.eth`,
-      ];
+      const domains = [`${longLabel}.eth`, `${longLabel}.${longLabel}.eth`];
 
-      domains.forEach(domain => {
+      domains.forEach((domain) => {
         const result = validateWalletAddress(domain, { nsDomains: ['eth'] });
         expect(result.network).toBe('ns');
         expect(result.isValid).toBe(true);
@@ -1429,16 +1465,18 @@ describe('Network-Specific Edge Cases', () => {
         `${tooLongTotal}.eth`, // Total length too long (>255 chars)
       ];
 
-      domains.forEach(domain => {
+      domains.forEach((domain) => {
         const result = validateWalletAddress(domain, { nsDomains: ['eth'] });
         console.log({
           domain: domain.length,
           isValid: result.isValid,
-          description: result.description
+          description: result.description,
         }); // Debug log
         expect(result.network).toBe('ns');
         expect(result.isValid).toBe(false);
-        expect(result.description).toBe('NS domain exceeds maximum total length of 255 characters');
+        expect(result.description).toBe(
+          'NS domain exceeds maximum total length of 255 characters',
+        );
       });
     });
   });
@@ -1452,7 +1490,7 @@ describe('Network-Specific Edge Cases', () => {
         { network: 'sol' }, // string instead of array
       ];
 
-      invalidOptions.forEach(options => {
+      invalidOptions.forEach((options) => {
         // @ts-expect-error Testing invalid option types
         const result = validateWalletAddress(address, options);
         expect(result.isValid).toBe(false); // Expect validation to fail with invalid options
@@ -1469,7 +1507,7 @@ describe('Cross-Network Validation', () => {
 
     // Test with different network filters
     const networks = ['evm', 'btc', 'ltc', 'sol'];
-    networks.forEach(network => {
+    networks.forEach((network) => {
       const result = validateWalletAddress(address, { network: [network] });
       expect(result.isValid).toBe(false);
     });

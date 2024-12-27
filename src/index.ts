@@ -66,7 +66,7 @@ function validateOptions(options: ValidationOptions): NetworkInfo | null {
         description: 'Invalid options: network must be an array or null',
       };
     }
-    if (!options.network.every(n => typeof n === 'string')) {
+    if (!options.network.every((n) => typeof n === 'string')) {
       return {
         network: null,
         isValid: false,
@@ -85,7 +85,10 @@ function validateOptions(options: ValidationOptions): NetworkInfo | null {
   }
 
   // Check enabledLegacy option
-  if (options.enabledLegacy !== undefined && typeof options.enabledLegacy !== 'boolean') {
+  if (
+    options.enabledLegacy !== undefined &&
+    typeof options.enabledLegacy !== 'boolean'
+  ) {
     return {
       network: null,
       isValid: false,
@@ -94,7 +97,10 @@ function validateOptions(options: ValidationOptions): NetworkInfo | null {
   }
 
   // Check emojiAllowed option
-  if (options.emojiAllowed !== undefined && typeof options.emojiAllowed !== 'boolean') {
+  if (
+    options.emojiAllowed !== undefined &&
+    typeof options.emojiAllowed !== 'boolean'
+  ) {
     return {
       network: null,
       isValid: false,
@@ -111,11 +117,12 @@ function validateOptions(options: ValidationOptions): NetworkInfo | null {
         description: 'Invalid options: nsDomains must be an array',
       };
     }
-    if (!options.nsDomains.every(d => typeof d === 'string')) {
+    if (!options.nsDomains.every((d) => typeof d === 'string')) {
       return {
         network: null,
         isValid: false,
-        description: 'Invalid options: nsDomains array must contain only strings',
+        description:
+          'Invalid options: nsDomains array must contain only strings',
       };
     }
   }
@@ -182,7 +189,8 @@ export function validateWalletAddress(
         if (addressForMatching.length > 255) {
           return {
             ...baseResponse,
-            description: 'NS domain exceeds maximum total length of 255 characters',
+            description:
+              'NS domain exceeds maximum total length of 255 characters',
           };
         }
 
@@ -192,7 +200,8 @@ export function validateWalletAddress(
           if (label.length > 63) {
             return {
               ...baseResponse,
-              description: 'NS domain label exceeds maximum length of 63 characters',
+              description:
+                'NS domain label exceeds maximum length of 63 characters',
             };
           }
         }
