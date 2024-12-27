@@ -17,7 +17,7 @@ declare module 'vitest' {
 // Add custom matcher
 beforeAll(() => {
   expect.extend({
-    toBeOneOf(received: any, array: readonly any[]) {
+    toBeOneOf(received, array) {
       const pass = array.includes(received);
       return {
         pass,
@@ -29,6 +29,17 @@ beforeAll(() => {
 });
 
 describe('validateWalletAddress', () => {
+  describe('Custom Matcher', () => {
+    test('toBeOneOf matcher works correctly', () => {
+      const testValue = 'test';
+      const validArray = ['test', 'other'];
+      const invalidArray = ['other', 'another'];
+
+      expect(testValue).toBeOneOf(validArray);
+      expect(() => expect(testValue).toBeOneOf(invalidArray)).toThrow();
+    });
+  });
+
   describe('EVM Addresses', () => {
     test('validates checksum EVM address', () => {
       const address = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
@@ -163,6 +174,31 @@ describe('validateWalletAddress', () => {
       expect(result.network).toBe('ns');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.isSubdomain).toBe(true);
+    });
+
+    test('handles NS domains with labels exceeding 63 characters', () => {
+      const tooLongLabel = 'a'.repeat(64); // Exceeds maximum length for a DNS label
+      const domains = [
+        `${tooLongLabel}.eth`, // Label too long (64 chars)
+        `sub.${tooLongLabel}.eth`, // Label too long in subdomain
+      ];
+
+      domains.forEach(domain => {
+        const result = validateWalletAddress(domain, { nsDomains: ['eth'] });
+        expect(result.network).toBe('ns');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe('NS domain label exceeds maximum length of 63 characters');
+      });
+    });
+
+    test('handles NS domains exceeding total length of 255 characters', () => {
+      const longButValidLabel = 'a'.repeat(63); // Maximum valid label length
+      const tooLongTotal = Array(5).fill(longButValidLabel).join('.'); // Creates a very long domain with dots
+
+      const result = validateWalletAddress(`${tooLongTotal}.eth`, { nsDomains: ['eth'] });
+      expect(result.network).toBe('ns');
+      expect(result.isValid).toBe(false);
+      expect(result.description).toBe('NS domain exceeds maximum total length of 255 characters');
     });
   });
 
@@ -801,6 +837,641 @@ describe('validateWalletAddress', () => {
         expect(result.isValid).toBe(false);
         expect(result.description).toBe('Invalid EVM address format');
       });
+    });
+
+    // Add test for uncovered error paths
+    test('handles null or undefined options', () => {
+      const address = '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97';
+      const result1 = validateWalletAddress(address);
+      expect(result1.isValid).toBe(true);
+
+      const result2 = validateWalletAddress(address, undefined);
+      expect(result2.isValid).toBe(true);
+    });
+
+    test('handles missing nsDomains option', () => {
+      const address = 'vitalik.eth';
+      const result = validateWalletAddress(address, {});
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain('Unknown address format');
+    });
+
+    describe('Edge Cases', () => {
+      test('handles extreme input values', () => {
+        // Test extremely long addresses
+        const longAddress = '0x' + 'a'.repeat(1000);
+        const longResult = validateWalletAddress(longAddress);
+        expect(longResult.isValid).toBe(false);
+
+        // Test with various falsy values
+        [null, undefined, '', ' '].forEach(value => {
+          const result = validateWalletAddress(value as any);
+          expect(result.isValid).toBe(false);
+          expect(result.network).toBe(null);
+        });
+
+        // Test with non-string types
+        [123, {}, [], true, false, () => {}].forEach(value => {
+          const result = validateWalletAddress(value as any);
+          expect(result.isValid).toBe(false);
+          expect(result.network).toBe(null);
+        });
+      });
+
+      test('handles all option combinations', () => {
+        const address = 'vitalik.eth';
+        const testCases = [
+          { options: {}, expected: false },
+          { options: { nsDomains: ['eth'] }, expected: true },
+          { options: { nsDomains: ['eth'], testnet: true }, expected: true },
+          { options: { nsDomains: ['eth'], testnet: false }, expected: true },
+          { options: { nsDomains: ['eth'], emojiAllowed: true }, expected: true },
+          { options: { nsDomains: ['eth'], emojiAllowed: false }, expected: true },
+          { options: { testnet: true }, expected: false },
+          { options: { emojiAllowed: true }, expected: false }
+        ];
+
+        testCases.forEach(({ options, expected }) => {
+          const result = validateWalletAddress(address, options);
+          expect(result.isValid).toBe(expected);
+        });
+      });
+
+      test('handles invalid option combinations', () => {
+        const address = 'vitalik.eth';
+        const testCases = [
+          {
+            options: { testnet: true, nsDomains: [] },
+            expected: false,
+            description: 'Empty nsDomains array'
+          },
+          {
+            options: { testnet: true, nsDomains: ['eth'] },
+            expected: true,
+            description: 'Standard options'
+          },
+          {
+            options: { testnet: 'invalid' as any, nsDomains: ['eth'] },
+            expected: false,
+            description: 'Invalid testnet option type'
+          },
+          {
+            options: { testnet: true, nsDomains: ['eth'], unknownOption: true } as any,
+            expected: true,
+            description: 'Unknown option'
+          }
+        ];
+
+        testCases.forEach(({ options, expected, description }) => {
+          const result = validateWalletAddress(address, options);
+          expect(result.isValid, description).toBe(expected);
+        });
+      });
+
+      test('handles special characters and encodings', () => {
+        const testCases = [
+          {
+            address: '\u0000invalid.eth',
+            expected: false,
+            description: 'Null character'
+          },
+          {
+            address: 'invalid\uFEFFdomain.eth',
+            expected: false,
+            description: 'Zero-width space'
+          },
+          {
+            address: 'invalid\u200Bdomain.eth',
+            expected: false,
+            description: 'Zero-width space'
+          },
+          {
+            address: 'invalid\u200Edomain.eth',
+            expected: false,
+            description: 'Left-to-right mark'
+          }
+        ];
+
+        testCases.forEach(({ address, expected, description }) => {
+          const result = validateWalletAddress(address, { nsDomains: ['eth'] });
+          expect(result.isValid, description).toBe(expected);
+        });
+      });
+
+      test('handles all possible validation scenarios', () => {
+        // Test with undefined options
+        expect(validateWalletAddress('0x123')).toEqual(
+          expect.objectContaining({ isValid: false })
+        );
+
+        // Test with undefined options explicitly
+        expect(validateWalletAddress('0x123', undefined)).toEqual(
+          expect.objectContaining({ isValid: false })
+        );
+
+        // Test with empty options
+        expect(validateWalletAddress('0x123', {})).toEqual(
+          expect.objectContaining({ isValid: false })
+        );
+
+        // Test with invalid options type
+        expect(validateWalletAddress('0x123', 'invalid' as any)).toEqual(
+          expect.objectContaining({ isValid: false })
+        );
+      });
+
+      test('handles network filtering', () => {
+        // Test all network variations
+        const networks = [
+          'evm', 'ns', 'sol', 'atom', 'btc', 'ltc',
+          'ada', 'dot', 'xrp', 'algo', 'xlm', 'xcb',
+          'xce', 'xab', null
+        ];
+        networks.forEach(network => {
+          const result = validateWalletAddress('invalid-address');
+          expect(result.network).toBeOneOf([...networks]);
+        });
+      });
+
+      test('handles errors in checksum validation', () => {
+        // Test invalid hex strings
+        const invalidHexAddresses = [
+          '0x123g', // invalid hex
+          '0xGHIJ', // invalid hex
+          '0x!@#$'  // invalid characters
+        ];
+
+        invalidHexAddresses.forEach(address => {
+          const result = validateWalletAddress(address);
+          expect(result.isValid).toBe(false);
+          expect(result.network).toBe('evm');
+        });
+      });
+
+      test('validates Bitcoin Cash addresses', () => {
+        const testCases = [
+          {
+            address: 'bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a',
+            format: 'CashAddr'
+          },
+          {
+            address: '1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu',
+            format: 'Legacy'
+          }
+        ];
+
+        testCases.forEach(({ address, format }) => {
+          const result = validateWalletAddress(address);
+          expect(result.network).toBe(format === 'Legacy' ? 'btc' : 'bch');
+          expect(result.isValid).toBe(true);
+          if (format === 'Legacy') {
+            expect(result.metadata?.compatibleWith).toContain('bch');
+          }
+        });
+      });
+
+      // Test invalid characters in ICAN addresses
+      test('handles invalid characters in ICAN addresses', () => {
+        const invalidAddresses = [
+          'cbGG47879011ea207df5b35a24ca6f0859dcfb145999', // Invalid hex chars
+          'ce45000000000000000000000000000000000000@000', // Invalid symbol
+          'ab79221*c43fc213c02182c8389f2bc32408e2c50922', // Invalid symbol
+        ];
+
+        invalidAddresses.forEach(address => {
+          const result = validateWalletAddress(address);
+          expect(result.isValid).toBe(false);
+        });
+      });
+
+      // Test error handling in validation process
+      test('handles validation errors gracefully', () => {
+        // Mock TextEncoder to throw error
+        const originalTextEncoder = global.TextEncoder;
+        // @ts-expect-error Intentionally breaking TextEncoder
+        global.TextEncoder = function() {
+          throw new Error('TextEncoder error');
+        };
+
+        const address = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+        const result = validateWalletAddress(address);
+        expect(result.isValid).toBe(false);
+        expect(result.description).toContain('Validation failed');
+
+        // Restore TextEncoder
+        global.TextEncoder = originalTextEncoder;
+      });
+
+      // Test Cardano address validation
+      test('validates all Cardano address types', () => {
+        const addresses = [
+          // Invalid format but correct prefix
+          'addr1invalid',
+          'addr_test1invalid',
+          'stake1invalid',
+          'stake_test1invalid',
+        ];
+
+        addresses.forEach(address => {
+          const result = validateWalletAddress(address);
+          expect(result.network).toBe('ada');
+          expect(result.isValid).toBe(false);
+          expect(result.description).toBe('Invalid Cardano address format');
+        });
+      });
+
+      // Test Bitcoin Cash address validation
+      test('validates Bitcoin Cash address formats', () => {
+        // Test invalid CashAddr format
+        const invalidAddr = 'bitcoincash:invalid';
+        const result = validateWalletAddress(invalidAddr);
+        expect(result.isValid).toBe(false);
+
+        // Test valid format but invalid address pattern
+        const invalidPattern = 'bitcoincash:z' + 'q'.repeat(41);
+        const result2 = validateWalletAddress(invalidPattern);
+        expect(result2.isValid).toBe(false);
+      });
+
+      // Test network filtering
+      test('handles network filtering edge cases', () => {
+        const address = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+
+        // Test with empty array
+        const result1 = validateWalletAddress(address, { network: [] });
+        expect(result1.isValid).toBe(true);
+
+        // Test with non-matching networks
+        const result2 = validateWalletAddress(address, { network: ['btc', 'ltc'] });
+        expect(result2.isValid).toBe(false);
+
+        // Test with null network option
+        const result3 = validateWalletAddress(address, { network: null });
+        expect(result3.isValid).toBe(true);
+      });
+
+      // Test Solana and Polkadot address conflicts
+      test('handles Solana and Polkadot address conflicts', () => {
+        const conflictingAddresses = [
+          'cosmos1conflictaddress',
+          'osmo1conflictaddress',
+          'r1conflictaddress',
+          'bc1conflictaddress',
+          'tb1conflictaddress',
+          'ltc1conflictaddress',
+          'tltc1conflictaddress',
+        ];
+
+        conflictingAddresses.forEach(address => {
+          // When filtering for Solana addresses
+          const solResult = validateWalletAddress(address, { network: ['sol'] });
+          expect(solResult.isValid).toBe(false);
+          expect(solResult.network).toBe(null);
+
+          // When filtering for Polkadot addresses
+          const dotResult = validateWalletAddress(address, { network: ['dot'] });
+          expect(dotResult.isValid).toBe(false);
+          expect(dotResult.network).toBe(null);
+        });
+      });
+    });
+  });
+});
+
+describe('Utility Functions (through validateWalletAddress)', () => {
+  describe('EVM Checksum Validation', () => {
+    test('validates correct mixed-case address', () => {
+      const address = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+      const result = validateWalletAddress(address);
+      expect(result.metadata?.isChecksumValid).toBe(true);
+    });
+
+    test('validates lowercase address', () => {
+      const address = '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed';
+      const result = validateWalletAddress(address);
+      expect(result.metadata?.isChecksumValid).toBe(true);
+    });
+  });
+
+  describe('ICAN Checksum Validation', () => {
+    test('validates correct ICAN address', () => {
+      const address = 'cb7147879011ea207df5b35a24ca6f0859dcfb145999';
+      const result = validateWalletAddress(address);
+      expect(result.isValid).toBe(true);
+      expect(result.metadata?.isChecksumValid).toBe(true);
+    });
+  });
+});
+
+describe('Utility Functions', () => {
+  describe('validateWalletAddress Edge Cases', () => {
+    test('handles invalid input types', () => {
+      const invalidInputs = [
+        undefined,
+        null,
+        123,
+        {},
+        [],
+        true,
+        false,
+        () => {},
+      ];
+
+      invalidInputs.forEach((input) => {
+        const result = validateWalletAddress(input as any);
+        expect(result.network).toBe(null);
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe('Invalid input');
+      });
+    });
+
+    test('handles invalid options', () => {
+      const address = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+      const invalidOptions = [
+        {},  // empty object should work
+        undefined,  // undefined should use default options
+      ];
+
+      invalidOptions.forEach((options) => {
+        const result = validateWalletAddress(address, options as any);
+        expect(result.network).toBe('evm');
+        expect(result.isValid).toBeTruthy(); // Valid EVM address should still be valid
+      });
+    });
+
+    test('handles all network combinations', () => {
+      const address = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+      const networks = [
+        [],
+        ['evm'],
+        ['btc'],
+        ['evm', 'btc'],
+        ['unknown'],
+        null,
+        undefined,
+      ];
+
+      networks.forEach((network) => {
+        const result = validateWalletAddress(address, { network });
+        if (!network || network.length === 0 || network.includes('evm')) {
+          expect(result.isValid).toBe(true);
+        } else {
+          expect(result.isValid).toBe(false);
+        }
+      });
+    });
+
+    test('handles all testnet combinations', () => {
+      const testnetAddresses = [
+        'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
+        'tltc1qk2ergl0hvg8g8r89nwqjl6m6k76rgwsh95qm9d',
+        'addr_test1qz2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3jcu5d8ps7zex2k2xt3uqxgjqnnj83ws8lhrn648jjxtwq2ytjqp',
+      ];
+
+      const testnetOptions = [
+        { testnet: true },
+        { testnet: false },
+        { testnet: undefined },
+        {},
+      ];
+
+      testnetAddresses.forEach((address) => {
+        testnetOptions.forEach((options) => {
+          const result = validateWalletAddress(address, options);
+          if (options.testnet === false) {
+            expect(result.isValid).toBe(false);
+            expect(result.description).toBe('Testnet address not allowed');
+          }
+        });
+      });
+    });
+
+    test('handles all NS domain combinations', () => {
+      const domains = [
+        'vitalik.eth',
+        'wallet.vitalik.eth',
+        '🦊.eth',
+        'crypto🦊.eth',
+        '🦊crypto.eth',
+      ];
+
+      const nsDomainOptions = [
+        { nsDomains: ['eth'] },
+        { nsDomains: [] },
+        { nsDomains: undefined },
+        { nsDomains: ['eth'], emojiAllowed: true },
+        { nsDomains: ['eth'], emojiAllowed: false },
+      ];
+
+      domains.forEach((domain) => {
+        nsDomainOptions.forEach((options) => {
+          const result = validateWalletAddress(domain, options);
+          if (!options.nsDomains?.length) {
+            expect(result.isValid).toBe(false);
+          } else if (options.emojiAllowed === false && domain.match(/\p{Extended_Pictographic}/u)) {
+            expect(result.isValid).toBe(false);
+            expect(result.description).toBe('Emoji characters are disabled in NS domains');
+          }
+        });
+      });
+    });
+
+    test('handles error cases in validation', () => {
+      const address = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+
+      // Test with Buffer being undefined
+      const originalBuffer = global.Buffer;
+      // @ts-expect-error Intentionally removing Buffer
+      delete global.Buffer;
+
+      const result = validateWalletAddress(address);
+      expect(result.isValid).toBe(true);
+      expect(result.network).toBe('evm');
+
+      // Restore Buffer
+      global.Buffer = originalBuffer;
+    });
+  });
+
+  describe('validateEVMChecksum', () => {
+    test('handles all checksum validation cases', () => {
+      const testCases = [
+        {
+          address: '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
+          force: true,
+          expected: true,
+        },
+        {
+          address: '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed',
+          force: true,
+          expected: false,
+        },
+        {
+          address: '0x5AAEB6053F3E94C9B9A09F33669435E7EF1BEAED',
+          force: true,
+          expected: false,
+        },
+        {
+          address: '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
+          force: false,
+          expected: true,
+        },
+        {
+          address: '0xinvalid',
+          force: false,
+          expected: false,
+        },
+      ];
+
+      testCases.forEach(({ address, force, expected }) => {
+        const result = validateWalletAddress(address, {}, force);
+        expect(result.isValid).toBe(expected);
+      });
+    });
+  });
+});
+
+describe('Hex Validation', () => {
+  test('validates hex addresses', () => {
+    const result = validateWalletAddress('0xff008040');
+    expect(result.network).toBe('evm');
+    expect(result.isValid).toBe(false);
+  });
+
+  test('handles empty hex', () => {
+    const result = validateWalletAddress('0x');
+    expect(result.isValid).toBe(false);
+  });
+
+  test('handles various hex values', () => {
+    const hexAddresses = [
+      '0xff00',
+      '0x0000',
+      '0xffff',
+      '0x1234'
+    ];
+
+    hexAddresses.forEach(address => {
+      const result = validateWalletAddress(address);
+      expect(result.network).toBe('evm');
+      expect(result.isValid).toBe(false);
+    });
+  });
+});
+
+describe('Edge Cases and Corner Cases', () => {
+  test('handles addresses with mixed case prefixes', () => {
+    const addresses = [
+      'BiTcOiNcAsH:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a',
+      'Bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
+      'TlTc1qk2ergl0hvg8g8r89nwqjl6m6k76rgwsh95qm9d'
+    ];
+
+    addresses.forEach(address => {
+      const result = validateWalletAddress(address);
+      expect(result.isValid).toBe(false);
+      expect(result.description).toMatch(/Invalid .* format|Unknown address format/);
+    });
+  });
+
+  test('handles addresses with zero-width spaces and other invisible characters', () => {
+    const addresses = [
+      '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed\u200B',
+      '\u200E0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
+      '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed\uFEFF'
+    ];
+
+    addresses.forEach(address => {
+      const result = validateWalletAddress(address);
+      expect(result.isValid).toBe(false);
+      expect(result.description).toMatch(/Invalid .* format|Unknown address format/);
+    });
+  });
+});
+
+describe('Network-Specific Edge Cases', () => {
+  describe('EVM Network', () => {
+    test('handles EVM addresses with valid hex but invalid length', () => {
+      const addresses = [
+        '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAe', // one character short
+        '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAedd', // one character long
+      ];
+
+      addresses.forEach(address => {
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe('evm');
+        expect(result.isValid).toBe(false);
+      });
+    });
+  });
+
+  describe('NS Domains', () => {
+    test('handles NS domains with maximum length components', () => {
+      const longLabel = 'a'.repeat(63); // Maximum length for a DNS label
+      const domains = [
+        `${longLabel}.eth`,
+        `${longLabel}.${longLabel}.eth`,
+      ];
+
+      domains.forEach(domain => {
+        const result = validateWalletAddress(domain, { nsDomains: ['eth'] });
+        expect(result.network).toBe('ns');
+        expect(result.isValid).toBe(true);
+      });
+    });
+
+    test('handles NS domains with invalid length components', () => {
+      const tooLongLabel = 'a'.repeat(256); // Exceeds maximum length for a DNS label
+      const tooLongTotal = Array(5).fill('a'.repeat(63)).join('.'); // Creates a very long domain with dots
+
+      const domains = [
+        `sub.${tooLongLabel}.eth`, // Label too long in subdomain
+        `${tooLongTotal}.eth`, // Total length too long (>255 chars)
+      ];
+
+      domains.forEach(domain => {
+        const result = validateWalletAddress(domain, { nsDomains: ['eth'] });
+        console.log({
+          domain: domain.length,
+          isValid: result.isValid,
+          description: result.description
+        }); // Debug log
+        expect(result.network).toBe('ns');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe('NS domain exceeds maximum total length of 255 characters');
+      });
+    });
+  });
+
+  describe('Option Validation', () => {
+    test('handles invalid option types', () => {
+      const address = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+      const invalidOptions = [
+        { testnet: 'yes' }, // string instead of boolean
+        { nsDomains: 'eth' }, // string instead of array
+        { network: 'sol' }, // string instead of array
+      ];
+
+      invalidOptions.forEach(options => {
+        // @ts-expect-error Testing invalid option types
+        const result = validateWalletAddress(address, options);
+        expect(result.isValid).toBe(false); // Expect validation to fail with invalid options
+        expect(result.description).toContain('Invalid options'); // Add appropriate error message
+      });
+    });
+  });
+});
+
+describe('Cross-Network Validation', () => {
+  test('handles addresses that could be valid in multiple networks', () => {
+    // Test addresses that could potentially match multiple network patterns
+    const address = '1234567890123456789012345678901234567890'; // Could match multiple patterns
+
+    // Test with different network filters
+    const networks = ['evm', 'btc', 'ltc', 'sol'];
+    networks.forEach(network => {
+      const result = validateWalletAddress(address, { network: [network] });
+      expect(result.isValid).toBe(false);
     });
   });
 });

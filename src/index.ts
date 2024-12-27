@@ -54,6 +54,75 @@ const patterns = {
   },
 };
 
+function validateOptions(options: ValidationOptions): NetworkInfo | null {
+  if (!options) return null;
+
+  // Check network option
+  if (options.network !== undefined && options.network !== null) {
+    if (!Array.isArray(options.network)) {
+      return {
+        network: null,
+        isValid: false,
+        description: 'Invalid options: network must be an array or null',
+      };
+    }
+    if (!options.network.every(n => typeof n === 'string')) {
+      return {
+        network: null,
+        isValid: false,
+        description: 'Invalid options: network array must contain only strings',
+      };
+    }
+  }
+
+  // Check testnet option
+  if (options.testnet !== undefined && typeof options.testnet !== 'boolean') {
+    return {
+      network: null,
+      isValid: false,
+      description: 'Invalid options: testnet must be a boolean',
+    };
+  }
+
+  // Check enabledLegacy option
+  if (options.enabledLegacy !== undefined && typeof options.enabledLegacy !== 'boolean') {
+    return {
+      network: null,
+      isValid: false,
+      description: 'Invalid options: enabledLegacy must be a boolean',
+    };
+  }
+
+  // Check emojiAllowed option
+  if (options.emojiAllowed !== undefined && typeof options.emojiAllowed !== 'boolean') {
+    return {
+      network: null,
+      isValid: false,
+      description: 'Invalid options: emojiAllowed must be a boolean',
+    };
+  }
+
+  // Check nsDomains option
+  if (options.nsDomains !== undefined) {
+    if (!Array.isArray(options.nsDomains)) {
+      return {
+        network: null,
+        isValid: false,
+        description: 'Invalid options: nsDomains must be an array',
+      };
+    }
+    if (!options.nsDomains.every(d => typeof d === 'string')) {
+      return {
+        network: null,
+        isValid: false,
+        description: 'Invalid options: nsDomains array must contain only strings',
+      };
+    }
+  }
+
+  return null;
+}
+
 /**
  * Validates a blockchain wallet address and returns information about the network it belongs to
  * @param address The wallet address to validate
@@ -71,6 +140,10 @@ export function validateWalletAddress(
   },
   forceChecksumValidation: boolean = false,
 ): NetworkInfo {
+  // Validate options
+  const optionsError = validateOptions(options);
+  if (optionsError) return optionsError;
+
   // Add this line near the start of the function to ensure nsDomains exists
   const nsDomains = options.nsDomains ?? [];
   const allowedNetworks = options.network ?? [];
@@ -105,15 +178,33 @@ export function validateWalletAddress(
           description: 'Invalid NS domain format',
         };
 
-        // First check for basic format issues (spaces, dots)
+        // First check total length (max 255 characters including dots)
+        if (addressForMatching.length > 255) {
+          return {
+            ...baseResponse,
+            description: 'NS domain exceeds maximum total length of 255 characters',
+          };
+        }
+
+        // Then check individual label lengths (max 63 characters)
+        const labels = addressForMatching.split('.');
+        for (const label of labels) {
+          if (label.length > 63) {
+            return {
+              ...baseResponse,
+              description: 'NS domain label exceeds maximum length of 63 characters',
+            };
+          }
+        }
+
+        // Then check for basic format issues (spaces, dots)
         if (
           address !== address.trim() || // has leading/trailing spaces
           address.includes('..') || // has consecutive dots
           /\s/.test(address) || // has spaces anywhere
           address.startsWith('.') || // starts with dot
-          address.endsWith('.')
+          address.endsWith('.') // ends with dot
         ) {
-          // ends with dot
           return {
             ...baseResponse,
             description: 'Invalid NS domain format',
@@ -124,7 +215,6 @@ export function validateWalletAddress(
         const validPattern =
           /^[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+(?:\.[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+)*\.[a-zA-Z]+$/u;
         if (!validPattern.test(address)) {
-          // For any format issues, keep the message simple
           return {
             ...baseResponse,
             description: 'Invalid NS domain format',
@@ -606,12 +696,7 @@ export function validateWalletAddress(
   }
 }
 
-/**
- * Validates the checksum of an EVM address
- * @param address The EVM address to validate
- * @returns boolean indicating if the checksum is valid
- */
-function validateEVMChecksum(
+export function validateEVMChecksum(
   address: string,
   forceValidation: boolean = false,
 ): boolean {
@@ -646,12 +731,7 @@ function validateEVMChecksum(
   return true;
 }
 
-/**
- * Validates the checksum of an ICAN address
- * @param address The ICAN address to validate
- * @returns boolean indicating if the checksum is valid
- */
-function validateICANChecksum(address: string): boolean {
+export function validateICANChecksum(address: string): boolean {
   address = address.toUpperCase();
   const rearranged = address.slice(4) + address.slice(0, 4);
 
@@ -673,13 +753,7 @@ function validateICANChecksum(address: string): boolean {
   return parseInt(remainder, 10) % 97 === 1;
 }
 
-/**
- * Checks if a network is enabled
- * @param networks The list of networks to check
- * @param allowedNetworks The list of allowed networks
- * @returns boolean indicating if the network is enabled
- */
-function enabledNetwork(
+export function enabledNetwork(
   networks: string[],
   allowedNetworks: string[],
 ): boolean {
