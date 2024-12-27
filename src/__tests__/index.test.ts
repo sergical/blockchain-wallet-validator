@@ -1,4 +1,11 @@
-import { describe, test, expect, beforeAll, beforeEach, afterEach } from 'vitest';
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterEach,
+} from 'vitest';
 import { validateWalletAddress } from '../index';
 
 declare module 'vitest' {
@@ -396,7 +403,7 @@ describe('validateWalletAddress', () => {
         'xcb',
         'xce',
         'xab',
-        null
+        null,
       ] as const;
 
       const invalidAddresses = [
@@ -476,7 +483,11 @@ describe('validateWalletAddress', () => {
       ];
 
       invalidAddresses.forEach((address: any) => {
-        const result = validateWalletAddress(address, { testnet: true, enabledLegacy: true, nsDomains: ['eth'] });
+        const result = validateWalletAddress(address, {
+          testnet: true,
+          enabledLegacy: true,
+          nsDomains: ['eth'],
+        });
         try {
           expect(result.network).toBeOneOf(possibleNetworks);
           expect(result.isValid).toBe(false);
@@ -672,7 +683,7 @@ describe('validateWalletAddress', () => {
       test.each([
         ['vitalik.eth', 'ns'],
         ['wallet.vitalik.eth', 'ns'],
-        ['cosmos1yw6g44c4pqd2rxgrcqekxg9k8f4fd8xpx2k8c3', 'atom']
+        ['cosmos1yw6g44c4pqd2rxgrcqekxg9k8f4fd8xpx2k8c3', 'atom'],
       ])('validates %s address', (address, expectedNetwork) => {
         const result = validateWalletAddress(address, {
           testnet: true,
@@ -742,7 +753,10 @@ describe('validateWalletAddress', () => {
     describe('NS Domain Validation Errors', () => {
       test('rejects NS domains with invalid characters when not emoji', () => {
         const address = 'invalid@domain.eth';
-        const result = validateWalletAddress(address, { nsDomains: ['eth'], emojiAllowed: false });
+        const result = validateWalletAddress(address, {
+          nsDomains: ['eth'],
+          emojiAllowed: false,
+        });
         expect(result.network).toBe('ns');
         expect(result.isValid).toBe(false);
         expect(result.description).toBe('Invalid NS domain format');
@@ -767,7 +781,10 @@ describe('validateWalletAddress', () => {
 
       test('rejects NS domains with emojis when emojis are not allowed', () => {
         const address = '🦊.eth';
-        const result = validateWalletAddress(address, { nsDomains: ['eth'], emojiAllowed: false });
+        const result = validateWalletAddress(address, {
+          nsDomains: ['eth'],
+          emojiAllowed: false,
+        });
         expect(result.network).toBe('ns');
         expect(result.isValid).toBe(false);
         expect(result.description).toBe(

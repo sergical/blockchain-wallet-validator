@@ -2,7 +2,6 @@
   "name": "blockchain-wallet-validator",
   "version": "1.0.1",
   "description": "A comprehensive blockchain wallet address validator",
-  "packageManager": "pnpm@8.10.0",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -46,7 +45,8 @@
     "algorand",
     "ripple",
     "evm",
-    "ens"
+    "ens",
+    "ican"
   ],
   "author": "Sergiy Dybskiy",
   "license": "MIT",

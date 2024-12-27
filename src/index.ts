@@ -86,13 +86,16 @@ export function validateWalletAddress(
 
   // For browser compatibility, we need to handle Buffer-less validation
   try {
-
     // NS Domain validation (check before other validations)
-    if (nsDomains.length > 0) {  // Only check if nsDomains are provided
+    if (nsDomains.length > 0) {
+      // Only check if nsDomains are provided
       // Trim the address and remove trailing dots for domain matching
-      const addressForMatching = address.trim().replace(/\.+$/, '').toLowerCase();
-      const matchedDomain = nsDomains.find(domain =>
-        addressForMatching.endsWith('.' + domain.toLowerCase())
+      const addressForMatching = address
+        .trim()
+        .replace(/\.+$/, '')
+        .toLowerCase();
+      const matchedDomain = nsDomains.find((domain) =>
+        addressForMatching.endsWith('.' + domain.toLowerCase()),
       );
 
       if (matchedDomain) {
@@ -103,11 +106,14 @@ export function validateWalletAddress(
         };
 
         // First check for basic format issues (spaces, dots)
-        if (address !== address.trim() ||  // has leading/trailing spaces
-            address.includes('..') ||      // has consecutive dots
-            /\s/.test(address) ||         // has spaces anywhere
-            address.startsWith('.') ||     // starts with dot
-            address.endsWith('.')) {      // ends with dot
+        if (
+          address !== address.trim() || // has leading/trailing spaces
+          address.includes('..') || // has consecutive dots
+          /\s/.test(address) || // has spaces anywhere
+          address.startsWith('.') || // starts with dot
+          address.endsWith('.')
+        ) {
+          // ends with dot
           return {
             ...baseResponse,
             description: 'Invalid NS domain format',
@@ -115,7 +121,8 @@ export function validateWalletAddress(
         }
 
         // Check for invalid characters (but allow emojis)
-        const validPattern = /^[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+(?:\.[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+)*\.[a-zA-Z]+$/u;
+        const validPattern =
+          /^[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+(?:\.[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+)*\.[a-zA-Z]+$/u;
         if (!validPattern.test(address)) {
           // For any format issues, keep the message simple
           return {
@@ -151,7 +158,10 @@ export function validateWalletAddress(
 
     // Try standard validation first
     // Handle EVM-like addresses first (including invalid ones)
-    if (address.toLowerCase().startsWith('0x') && enabledNetwork(['evm', 'eth', 'base', 'pol'], allowedNetworks)) {
+    if (
+      address.toLowerCase().startsWith('0x') &&
+      enabledNetwork(['evm', 'eth', 'base', 'pol'], allowedNetworks)
+    ) {
       // Check for exact length and valid hex characters
       if (!patterns.evm.test(address)) {
         return {
@@ -179,7 +189,10 @@ export function validateWalletAddress(
     }
 
     // Core (ICAN)
-    if (enabledNetwork(['ican', 'xcb', 'xce', 'xab'], allowedNetworks) && patterns.ican.test(address)) {
+    if (
+      enabledNetwork(['ican', 'xcb', 'xce', 'xab'], allowedNetworks) &&
+      patterns.ican.test(address)
+    ) {
       const isTestnet = address.startsWith('ab');
       if (isTestnet && !options.testnet) {
         return {
@@ -357,7 +370,7 @@ export function validateWalletAddress(
     if (enabledNetwork(['atom'], allowedNetworks)) {
       const cosmosMatch = address.match(patterns.atom);
       if (cosmosMatch) {
-        const prefix = cosmosMatch[1];  // Gets the captured group (cosmos|osmo|axelar|juno|stars)
+        const prefix = cosmosMatch[1]; // Gets the captured group (cosmos|osmo|axelar|juno|stars)
         return {
           network: 'atom',
           isValid: true,
@@ -382,7 +395,7 @@ export function validateWalletAddress(
             format: 'bech32',
             era: 'shelley',
             type: 'payment',
-            isTestnet: false
+            isTestnet: false,
           },
         };
       }
@@ -404,7 +417,7 @@ export function validateWalletAddress(
             format: 'bech32',
             era: 'shelley',
             type: 'payment',
-            isTestnet: true
+            isTestnet: true,
           },
         };
       }
@@ -419,7 +432,7 @@ export function validateWalletAddress(
             format: 'bech32',
             era: 'shelley',
             type: 'stake',
-            isTestnet: false
+            isTestnet: false,
           },
         };
       }
@@ -441,7 +454,7 @@ export function validateWalletAddress(
             format: 'bech32',
             era: 'shelley',
             type: 'stake',
-            isTestnet: true
+            isTestnet: true,
           },
         };
       }
@@ -466,7 +479,7 @@ export function validateWalletAddress(
           description: 'Ripple address',
           metadata: {
             format: 'base58',
-            isTestnet: false
+            isTestnet: false,
           },
         };
       }
@@ -477,7 +490,9 @@ export function validateWalletAddress(
       // First check if it matches the basic Solana pattern
       if (patterns.sol.test(address)) {
         // Then check for conflicts
-        if (/^(cosmos|osmo|axelar|juno|stars|r|bc1|tb1|ltc1|tltc1)/.test(address)) {
+        if (
+          /^(cosmos|osmo|axelar|juno|stars|r|bc1|tb1|ltc1|tltc1)/.test(address)
+        ) {
           return {
             network: 'sol',
             isValid: false,
@@ -490,7 +505,7 @@ export function validateWalletAddress(
           description: 'Solana address',
           metadata: {
             format: 'base58',
-            isTestnet: options.testnet || false
+            isTestnet: options.testnet || false,
           },
         };
       }
@@ -501,7 +516,9 @@ export function validateWalletAddress(
       // First check if it matches the basic Polkadot pattern
       if (patterns.dot.test(address)) {
         // Then check for conflicts
-        if (/^(cosmos|osmo|axelar|juno|stars|r|bc1|tb1|ltc1|tltc1)/.test(address)) {
+        if (
+          /^(cosmos|osmo|axelar|juno|stars|r|bc1|tb1|ltc1|tltc1)/.test(address)
+        ) {
           return {
             network: 'dot',
             isValid: false,
@@ -521,7 +538,10 @@ export function validateWalletAddress(
     }
 
     // Algorand
-    if (enabledNetwork(['algo'], allowedNetworks) && patterns.algo.test(address)) {
+    if (
+      enabledNetwork(['algo'], allowedNetworks) &&
+      patterns.algo.test(address)
+    ) {
       return {
         network: 'algo',
         isValid: true,
@@ -533,7 +553,10 @@ export function validateWalletAddress(
     }
 
     // Stellar
-    if (enabledNetwork(['xlm'], allowedNetworks) && patterns.xlm.test(address)) {
+    if (
+      enabledNetwork(['xlm'], allowedNetworks) &&
+      patterns.xlm.test(address)
+    ) {
       return {
         network: 'xlm',
         isValid: true,
@@ -546,7 +569,10 @@ export function validateWalletAddress(
     }
 
     // Bitcoin Cash (CashAddr format)
-    if (enabledNetwork(['bch'], allowedNetworks) && patterns.bch.cashAddr.test(address)) {
+    if (
+      enabledNetwork(['bch'], allowedNetworks) &&
+      patterns.bch.cashAddr.test(address)
+    ) {
       const addr = address.toLowerCase().replace('bitcoincash:', '');
       if (patterns.bch.address.test(addr)) {
         return {
@@ -653,7 +679,10 @@ function validateICANChecksum(address: string): boolean {
  * @param allowedNetworks The list of allowed networks
  * @returns boolean indicating if the network is enabled
  */
-function enabledNetwork(networks: string[], allowedNetworks: string[]): boolean {
+function enabledNetwork(
+  networks: string[],
+  allowedNetworks: string[],
+): boolean {
   if (allowedNetworks.length === 0) {
     return true;
   }
