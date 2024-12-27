@@ -114,10 +114,9 @@ describe('validateWalletAddress', () => {
         const result = validateWalletAddress(domain, {
           nsDomains: ['eth'],
         });
+        expect(result.network).toBe('ns');
         expect(result.isValid).toBe(false);
-        expect(result.description).toMatch(
-          /(Invalid NS domain format|Contains invalid characters)/,
-        );
+        expect(result.description).toBe('Invalid NS domain format');
       });
     });
 
@@ -334,7 +333,7 @@ describe('validateWalletAddress', () => {
   describe('Other Networks', () => {
     test('validates Cardano address', () => {
       const result = validateWalletAddress(
-        'addr1qxy8m0txfw2ng2z5wh5sps7n5r7alpx7w4l6zpxymr2myj8mmqwzf9h82zj2f9q76q2wqy572hp0pk7tnrcnx0a7esq5s7qm4',
+        'addr1qythpnvgh8cptwjremjyhtu9s8hjhumhl394uu8kj8g0e8zccjv53fguu9z3xst5md4np534fy0r6t3ad5p7e63qa0ks5j9yky',
       );
       expect(result.network).toBe('ada');
       expect(result.isValid).toBe(true);
@@ -344,7 +343,7 @@ describe('validateWalletAddress', () => {
 
     test('validates Polkadot address', () => {
       const result = validateWalletAddress(
-        '1FRMM8PEiWXYax7rpS6X4XZX1aAAxSWx1CrKTyrVYhV24fg',
+        '14ha4TkKnHmmYQeFaFw8um5vx5WgA5pjjcg4b9JjB6HXMdiu',
       );
       expect(result.network).toBe('dot');
       expect(result.isValid).toBe(true);
@@ -353,7 +352,7 @@ describe('validateWalletAddress', () => {
 
     test('validates Ripple address', () => {
       const result = validateWalletAddress(
-        'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+        'r9qhsH6xHyKAjGhgA9anpWJJmVDAwDGfn6',
       );
       expect(result.network).toBe('xrp');
       expect(result.isValid).toBe(true);
@@ -362,7 +361,7 @@ describe('validateWalletAddress', () => {
 
     test('validates Algorand address', () => {
       const result = validateWalletAddress(
-        'VCMJKWOY5P5P7SKMZFFOCEROPJCZOTIJMNIYNUCKH7LRO45JMJP6UYBIJA',
+        '2OLDYPKUOPFN6ZEQ3ULYSNEQZIK7FQYCL34LOGH3TXSSQOC272VB7JWNMQ',
       );
       expect(result.network).toBe('algo');
       expect(result.isValid).toBe(true);
@@ -371,7 +370,7 @@ describe('validateWalletAddress', () => {
 
     test('validates Stellar address', () => {
       const result = validateWalletAddress(
-        'GBQMXVTR5HQNRGXPR4ZPBOZR7VQXOQMEQMZWIVLIW2MYBXC2HQWZZ4VJ',
+        'GAKS5NRNURVDK6WKLEEFPEUB3C5H3VPURL26PVQ3EPIYJT2B35NMAZHA',
       );
       expect(result.network).toBe('xlm');
       expect(result.isValid).toBe(true);
@@ -841,7 +840,7 @@ describe('validateWalletAddress', () => {
         expect(result.network).toBe('ns');
         expect(result.isValid).toBe(false);
         expect(result.description).toBe(
-          'Emoji characters are not allowed in NS domains',
+          'Emoji characters are disabled in NS domains',
         );
       });
     });

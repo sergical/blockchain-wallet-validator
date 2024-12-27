@@ -22,6 +22,38 @@ function bytesToHex(bytes: Uint8Array): string {
     .join('');
 }
 
+// Browser-compatible validation patterns
+const patterns = {
+  evm: /^0x[a-f0-9]{40}$/i,
+  atom: /^(cosmos|osmo|axelar|juno|stars)1[a-zA-Z0-9]{38}$/,
+  sol: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+  ada: {
+    mainnet: /^addr1[a-z0-9]{98}$/,
+    testnet: /^addr_test1[a-z0-9]{98}$/,
+    stake: /^stake1[a-z0-9]{53}$/,
+    stakeTestnet: /^stake_test1[a-z0-9]{53}$/,
+  },
+  algo: /^[A-Z2-7]{58}$/,
+  xlm: /^G[A-Z2-7]{55}$/,
+  ican: /^(cb|ce|ab)[0-9]{2}[a-f0-9]{40}$/i,
+  dot: /^[1-9A-HJ-NP-Za-km-z]{47,48}$/,
+  btc: {
+    legacy: /^[1][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
+    segwit: /^[3][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
+    nativeSegwit: /^(bc1|tb1)[a-zA-HJ-NP-Z0-9]{25,89}$/,
+  },
+  ltc: {
+    legacy: /^L[1-9A-HJ-NP-Za-km-z]{26,34}$/,
+    segwit: /^M[1-9A-HJ-NP-Za-km-z]{26,34}$/,
+    nativeSegwit: /^(ltc1|tltc1)[a-zA-HJ-NP-Z0-9]{25,89}$/,
+  },
+  xrp: /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/,
+  bch: {
+    cashAddr: /^(bitcoincash:)?[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{42}$/,
+    address: /^[qp][qpzry9x8gf2tvdw0s3jn54khce6mua7l]{41}$/,
+  },
+};
+
 /**
  * Validates a blockchain wallet address and returns information about the network it belongs to
  * @param address The wallet address to validate
@@ -52,483 +84,500 @@ export function validateWalletAddress(
     };
   }
 
-  // NS Domain validation
-  const matchedDomain = nsDomains.find((domain) => address.toLowerCase().endsWith('.' + domain));
-  if (matchedDomain) {
-    // First check for invalid format patterns
-    if (address.includes('..') || address.trim() !== address) {
-      return {
-        network: 'ns',
-        isValid: false,
-        description: 'Invalid NS domain format',
-      };
-    }
+  // For browser compatibility, we need to handle Buffer-less validation
+  try {
 
-    // Then check for valid characters
-    if (!/^[a-z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+(?:\.[a-z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+)*\.[a-z]+$/ui.test(address.toLowerCase())) {
-      const containsEmojis = /\p{Extended_Pictographic}/u.test(address);
-      if (containsEmojis) {
-        if (options.emojiAllowed === false) {
+    // NS Domain validation (check before other validations)
+    if (nsDomains.length > 0) {  // Only check if nsDomains are provided
+      // Trim the address and remove trailing dots for domain matching
+      const addressForMatching = address.trim().replace(/\.+$/, '').toLowerCase();
+      const matchedDomain = nsDomains.find(domain =>
+        addressForMatching.endsWith('.' + domain.toLowerCase())
+      );
+
+      if (matchedDomain) {
+        const baseResponse = {
+          network: 'ns' as const,
+          isValid: false,
+          description: 'Invalid NS domain format',
+        };
+
+        // First check for basic format issues (spaces, dots)
+        if (address !== address.trim() ||  // has leading/trailing spaces
+            address.includes('..') ||      // has consecutive dots
+            /\s/.test(address) ||         // has spaces anywhere
+            address.startsWith('.') ||     // starts with dot
+            address.endsWith('.')) {      // ends with dot
           return {
-            network: 'ns',
-            isValid: false,
-            description: 'Emoji characters are not allowed in NS domains',
+            ...baseResponse,
+            description: 'Invalid NS domain format',
           };
         }
-      } else {
+
+        // Check for invalid characters (but allow emojis)
+        const validPattern = /^[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+(?:\.[a-zA-Z0-9-\p{Emoji_Presentation}\p{Extended_Pictographic}]+)*\.[a-zA-Z]+$/u;
+        if (!validPattern.test(address)) {
+          // For any format issues, keep the message simple
+          return {
+            ...baseResponse,
+            description: 'Invalid NS domain format',
+          };
+        }
+
+        // Check emoji allowance
+        const containsEmojis = /\p{Extended_Pictographic}/u.test(address);
+        if (containsEmojis && options.emojiAllowed === false) {
+          return {
+            ...baseResponse,
+            description: 'Emoji characters are disabled in NS domains',
+          };
+        }
+
+        // If we get here, the domain is valid
+        const isSubdomain = address.split('.').length > 2;
+
         return {
           network: 'ns',
-          isValid: false,
-          description: 'Invalid NS domain format - only ASCII letters, numbers, hyphens, and emojis are allowed',
+          isValid: true,
+          description: 'Name Service domain',
+          metadata: {
+            format: matchedDomain,
+            isSubdomain,
+            isEmoji: containsEmojis,
+          },
         };
       }
     }
 
-    const isSubdomain = address.split('.').length > 2;
-    const isEmoji = /\p{Extended_Pictographic}/u.test(address);
+    // Try standard validation first
+    // Handle EVM-like addresses first (including invalid ones)
+    if (address.toLowerCase().startsWith('0x') && enabledNetwork(['evm', 'eth', 'base', 'pol'], allowedNetworks)) {
+      // Check for exact length and valid hex characters
+      if (!patterns.evm.test(address)) {
+        return {
+          network: 'evm',
+          isValid: false,
+          description: 'Invalid EVM address format',
+        };
+      }
 
-    return {
-      network: 'ns',
-      isValid: true,
-      description: 'Name Service domain',
-      metadata: {
-        format: matchedDomain,
-        isSubdomain,
-        isEmoji,
-      },
-    };
-  }
+      const isChecksumValid = validateEVMChecksum(
+        address,
+        forceChecksumValidation,
+      );
 
-  // Handle EVM-like addresses first (including invalid ones)
-  if (address.startsWith('0x') && enabledNetwork(['evm', 'eth', 'base', 'pol'], allowedNetworks)) {
-    // Check for exact length and valid hex characters
-    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
       return {
         network: 'evm',
-        isValid: false,
-        description: 'Invalid EVM address format',
+        isValid: isChecksumValid,
+        description:
+          'Ethereum Virtual Machine compatible address (Ethereum, Polygon, BSC, etc.)',
+        metadata: {
+          format: 'hex',
+          isChecksumValid,
+        },
       };
     }
 
-    const isChecksumValid = validateEVMChecksum(
-      address,
-      forceChecksumValidation,
-    );
-    return {
-      network: 'evm',
-      isValid: isChecksumValid,
-      description:
-        'Ethereum Virtual Machine compatible address (Ethereum, Polygon, BSC, etc.)',
-      metadata: {
-        format: 'hex',
-        isChecksumValid,
-      },
-    };
-  }
-
-  // Core (ICAN)
-  if (enabledNetwork(['ican', 'xcb', 'xce', 'xab'], allowedNetworks) && /^(cb|ce|ab)[0-9]{2}[a-f0-9]{40}$/i.test(address)) {
-    const isTestnet = address.startsWith('ab');
-    if (isTestnet && !options.testnet) {
-      return {
-        network: 'xab',
-        isValid: false,
-        description: 'Testnet address not allowed',
-      };
-    }
-    const isChecksumValid = validateICANChecksum(address);
-    const prefix = address.slice(0, 2).toLowerCase();
-    return {
-      network: 'x' + prefix,
-      isValid: isChecksumValid,
-      description: 'ICAN address for Core blockchain networks',
-      metadata: {
-        format: 'ican',
-        isChecksumValid,
-        codename:
-          prefix === 'cb'
-            ? 'Mainnet'
-            : prefix === 'ce'
-              ? 'Koliba'
-              : prefix === 'ab'
-                ? 'Devin'
-                : undefined,
-        isTestnet,
-        printFormat:
-          address
-            .toUpperCase()
-            .match(/.{1,4}/g)
-            ?.join('\u00A0') || address.toUpperCase(),
-        electronicFormat: address.toUpperCase(),
-      },
-    };
-  }
-
-  // Bitcoin addresses (check before general base58 patterns)
-  if (enabledNetwork(['btc'], allowedNetworks)) {
-    // Bitcoin Legacy
-    if (options.enabledLegacy && /^1[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address)) {
-      try {
-        base58check.decode(address);
-        return {
-          network: 'btc',
-          isValid: true,
-          description: 'Bitcoin Legacy address',
-          metadata: {
-            format: 'Legacy',
-            isTestnet: false,
-            compatibleWith: ['bch'],
-          },
-        };
-      } catch {
-        return {
-          network: 'btc',
-          isValid: false,
-          description: 'Invalid Bitcoin Legacy address',
-        };
-      }
-    }
-
-    // Bitcoin SegWit
-    if (/^3[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(address)) {
-      try {
-        base58check.decode(address);
-        return {
-          network: 'btc',
-          isValid: true,
-          description: 'Bitcoin SegWit address',
-          metadata: {
-            format: 'SegWit',
-            isTestnet: false,
-          },
-        };
-      } catch {
-        return {
-          network: 'btc',
-          isValid: false,
-          description: 'Invalid Bitcoin SegWit address',
-        };
-      }
-    }
-
-    // Bitcoin Native SegWit (bech32)
-    if (/^(bc1|tb1)[a-zA-HJ-NP-Z0-9]{25,89}$/.test(address)) {
-      const isTestnet = address.startsWith('tb1');
+    // Core (ICAN)
+    if (enabledNetwork(['ican', 'xcb', 'xce', 'xab'], allowedNetworks) && patterns.ican.test(address)) {
+      const isTestnet = address.startsWith('ab');
       if (isTestnet && !options.testnet) {
         return {
-          network: 'btc',
+          network: 'xab',
           isValid: false,
           description: 'Testnet address not allowed',
         };
       }
+      const isChecksumValid = validateICANChecksum(address);
+      const prefix = address.slice(0, 2).toLowerCase();
       return {
-        network: 'btc',
-        isValid: true,
-        description: 'Bitcoin Native SegWit address',
+        network: 'x' + prefix,
+        isValid: isChecksumValid,
+        description: 'ICAN address for Core blockchain networks',
         metadata: {
-          format: 'Native SegWit',
+          format: 'ican',
+          isChecksumValid,
+          codename:
+            prefix === 'cb'
+              ? 'Mainnet'
+              : prefix === 'ce'
+                ? 'Koliba'
+                : prefix === 'ab'
+                  ? 'Devin'
+                  : undefined,
           isTestnet,
+          printFormat:
+            address
+              .toUpperCase()
+              .match(/.{1,4}/g)
+              ?.join('\u00A0') || address.toUpperCase(),
+          electronicFormat: address.toUpperCase(),
         },
       };
     }
-  }
 
-  // Litecoin addresses
-  if (enabledNetwork(['ltc'], allowedNetworks)) {
-    // Litecoin Legacy
-    if (options.enabledLegacy && /^L[1-9A-HJ-NP-Za-km-z]{26,34}$/.test(address)) {
-      try {
-        base58check.decode(address);
+    // Bitcoin addresses (check before general base58 patterns)
+    if (enabledNetwork(['btc'], allowedNetworks)) {
+      // Bitcoin Legacy
+      if (options.enabledLegacy && patterns.btc.legacy.test(address)) {
+        try {
+          base58check.decode(address);
+          return {
+            network: 'btc',
+            isValid: true,
+            description: 'Bitcoin Legacy address',
+            metadata: {
+              format: 'Legacy',
+              isTestnet: false,
+              compatibleWith: ['bch'],
+            },
+          };
+        } catch {
+          return {
+            network: 'btc',
+            isValid: false,
+            description: 'Invalid Bitcoin Legacy address',
+          };
+        }
+      }
+
+      // Bitcoin SegWit
+      if (patterns.btc.segwit.test(address)) {
+        try {
+          base58check.decode(address);
+          return {
+            network: 'btc',
+            isValid: true,
+            description: 'Bitcoin SegWit address',
+            metadata: {
+              format: 'SegWit',
+              isTestnet: false,
+            },
+          };
+        } catch {
+          return {
+            network: 'btc',
+            isValid: false,
+            description: 'Invalid Bitcoin SegWit address',
+          };
+        }
+      }
+
+      // Bitcoin Native SegWit (bech32)
+      if (patterns.btc.nativeSegwit.test(address)) {
+        const isTestnet = address.startsWith('tb1');
+        if (isTestnet && !options.testnet) {
+          return {
+            network: 'btc',
+            isValid: false,
+            description: 'Testnet address not allowed',
+          };
+        }
+        return {
+          network: 'btc',
+          isValid: true,
+          description: 'Bitcoin Native SegWit address',
+          metadata: {
+            format: 'Native SegWit',
+            isTestnet,
+          },
+        };
+      }
+    }
+
+    // Litecoin addresses
+    if (enabledNetwork(['ltc'], allowedNetworks)) {
+      // Litecoin Legacy
+      if (options.enabledLegacy && patterns.ltc.legacy.test(address)) {
+        try {
+          base58check.decode(address);
+          return {
+            network: 'ltc',
+            isValid: true,
+            description: 'Litecoin Legacy address',
+            metadata: {
+              format: 'Legacy',
+              isTestnet: false,
+            },
+          };
+        } catch {
+          return {
+            network: 'ltc',
+            isValid: false,
+            description: 'Invalid Litecoin Legacy address',
+          };
+        }
+      }
+
+      // Litecoin SegWit
+      if (patterns.ltc.segwit.test(address)) {
+        try {
+          base58check.decode(address);
+          return {
+            network: 'ltc',
+            isValid: true,
+            description: 'Litecoin SegWit address',
+            metadata: {
+              format: 'SegWit',
+              isTestnet: false,
+            },
+          };
+        } catch {
+          return {
+            network: 'ltc',
+            isValid: false,
+            description: 'Invalid Litecoin SegWit address',
+          };
+        }
+      }
+
+      // Litecoin Native SegWit (bech32)
+      if (patterns.ltc.nativeSegwit.test(address)) {
+        const isTestnet = address.startsWith('tltc1');
+        if (isTestnet && !options.testnet) {
+          return {
+            network: 'ltc',
+            isValid: false,
+            description: 'Testnet address not allowed',
+          };
+        }
         return {
           network: 'ltc',
           isValid: true,
-          description: 'Litecoin Legacy address',
+          description: 'Litecoin Native SegWit address',
           metadata: {
-            format: 'Legacy',
-            isTestnet: false,
+            format: 'Native SegWit',
+            isTestnet,
           },
         };
-      } catch {
-        return {
-          network: 'ltc',
-          isValid: false,
-          description: 'Invalid Litecoin Legacy address',
-        };
       }
     }
 
-    // Litecoin SegWit
-    if (/^M[1-9A-HJ-NP-Za-km-z]{26,34}$/.test(address)) {
-      try {
-        base58check.decode(address);
-        return {
-          network: 'ltc',
-          isValid: true,
-          description: 'Litecoin SegWit address',
-          metadata: {
-            format: 'SegWit',
-            isTestnet: false,
-          },
-        };
-      } catch {
-        return {
-          network: 'ltc',
-          isValid: false,
-          description: 'Invalid Litecoin SegWit address',
-        };
-      }
-    }
-
-    // Litecoin Native SegWit (bech32)
-    if (/^(ltc1|tltc1)[a-zA-HJ-NP-Z0-9]{25,89}$/.test(address)) {
-      const isTestnet = address.startsWith('tltc1');
-      if (isTestnet && !options.testnet) {
-        return {
-          network: 'ltc',
-          isValid: false,
-          description: 'Testnet address not allowed',
-        };
-      }
-      return {
-        network: 'ltc',
-        isValid: true,
-        description: 'Litecoin Native SegWit address',
-        metadata: {
-          format: 'Native SegWit',
-          isTestnet,
-        },
-      };
-    }
-  }
-
-  // Cosmos (check before general base58 patterns)
-  if (enabledNetwork(['atom'], allowedNetworks)) {
-    // Mainnet prefixes
-    const mainnetPrefixes = ['cosmos', 'osmo', 'axelar', 'juno', 'stars'];
-    // Testnet prefixes (usually append 'test' to the mainnet prefix)
-    const testnetPrefixes = mainnetPrefixes.map(prefix => `${prefix}test`);
-
-    // Check mainnet addresses
-    if (new RegExp(`^(${mainnetPrefixes.join('|')})[1-9a-z]{38,39}$`).test(address)) {
-      const prefix = address.match(new RegExp(`^(${mainnetPrefixes.join('|')})`))?.[0];
-      return {
-        network: 'atom',
-        isValid: true,
-        description: 'Cosmos ecosystem address',
-        metadata: {
-          chain: prefix,
-          format: 'bech32',
-          isTestnet: false
-        },
-      };
-    }
-
-    // Check testnet addresses
-    if (new RegExp(`^(${testnetPrefixes.join('|')})[1-9a-z]{38,39}$`).test(address)) {
-      if (!options.testnet) {
+    // Cosmos (check before general base58 patterns)
+    if (enabledNetwork(['atom'], allowedNetworks)) {
+      const cosmosMatch = address.match(patterns.atom);
+      if (cosmosMatch) {
+        const prefix = cosmosMatch[1];  // Gets the captured group (cosmos|osmo|axelar|juno|stars)
         return {
           network: 'atom',
-          isValid: false,
-          description: 'Testnet address not allowed',
+          isValid: true,
+          description: 'Cosmos ecosystem address',
+          metadata: {
+            chain: prefix,
+            format: 'bech32',
+          },
         };
       }
-      const prefix = address.match(new RegExp(`^(${testnetPrefixes.join('|')})`))?.[0];
-      return {
-        network: 'atom',
-        isValid: true,
-        description: 'Cosmos ecosystem testnet address',
-        metadata: {
-          chain: prefix,
-          format: 'bech32',
-          isTestnet: true
-        },
-      };
-    }
-  }
-
-  // Cardano
-  if (enabledNetwork(['ada'], allowedNetworks)) {
-    // Shelley mainnet - length varies but typically between 90-110 characters
-    if (/^addr1[a-zA-Z0-9]{54,104}$/.test(address)) {
-      return {
-        network: 'ada',
-        isValid: true,
-        description: 'Cardano Shelley mainnet address',
-        metadata: {
-          format: 'bech32',
-          era: 'shelley',
-          isTestnet: false
-        },
-      };
     }
 
-    // Shelley testnet - length varies but typically between 90-110 characters
-    if (/^addr_test1[a-zA-Z0-9]{54,104}$/.test(address)) {
-      if (!options.testnet) {
+    // Cardano
+    if (enabledNetwork(['ada'], allowedNetworks)) {
+      // Shelley mainnet
+      if (patterns.ada.mainnet.test(address)) {
+        return {
+          network: 'ada',
+          isValid: true,
+          description: 'Cardano Shelley mainnet address',
+          metadata: {
+            format: 'bech32',
+            era: 'shelley',
+            type: 'payment',
+            isTestnet: false
+          },
+        };
+      }
+
+      // Shelley testnet
+      if (patterns.ada.testnet.test(address)) {
+        if (!options.testnet) {
+          return {
+            network: 'ada',
+            isValid: false,
+            description: 'Testnet address not allowed',
+          };
+        }
+        return {
+          network: 'ada',
+          isValid: true,
+          description: 'Cardano Shelley testnet address',
+          metadata: {
+            format: 'bech32',
+            era: 'shelley',
+            type: 'payment',
+            isTestnet: true
+          },
+        };
+      }
+
+      // Stake address mainnet
+      if (patterns.ada.stake.test(address)) {
+        return {
+          network: 'ada',
+          isValid: true,
+          description: 'Cardano stake address',
+          metadata: {
+            format: 'bech32',
+            era: 'shelley',
+            type: 'stake',
+            isTestnet: false
+          },
+        };
+      }
+
+      // Stake address testnet
+      if (patterns.ada.stakeTestnet.test(address)) {
+        if (!options.testnet) {
+          return {
+            network: 'ada',
+            isValid: false,
+            description: 'Testnet address not allowed',
+          };
+        }
+        return {
+          network: 'ada',
+          isValid: true,
+          description: 'Cardano stake testnet address',
+          metadata: {
+            format: 'bech32',
+            era: 'shelley',
+            type: 'stake',
+            isTestnet: true
+          },
+        };
+      }
+
+      // Invalid format check
+      if (/^(addr1|addr_test1|stake1|stake_test1)/.test(address)) {
         return {
           network: 'ada',
           isValid: false,
-          description: 'Testnet address not allowed',
+          description: 'Invalid Cardano address format',
         };
       }
-      return {
-        network: 'ada',
-        isValid: true,
-        description: 'Cardano Shelley testnet address',
-        metadata: {
-          format: 'bech32',
-          era: 'shelley',
-          isTestnet: true
-        },
-      };
     }
 
-    // If it starts with addr1 or addr_test1 but doesn't match the full pattern
-    if (/^(addr1|addr_test1)/.test(address)) {
-      return {
-        network: 'ada',
-        isValid: false,
-        description: 'Invalid Cardano address format',
-      };
-    }
-  }
-
-  // Ripple (XRP) - specific pattern to avoid conflicts
-  if (enabledNetwork(['xrp'], allowedNetworks)) {
-    // Mainnet addresses start with 'r'
-    if (/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(address)) {
-      return {
-        network: 'xrp',
-        isValid: true,
-        description: 'Ripple address',
-        metadata: {
-          format: 'base58',
-          isTestnet: false
-        },
-      };
+    // Ripple (XRP) - specific pattern to avoid conflicts
+    if (enabledNetwork(['xrp'], allowedNetworks)) {
+      // Mainnet addresses start with 'r'
+      if (patterns.xrp.test(address)) {
+        return {
+          network: 'xrp',
+          isValid: true,
+          description: 'Ripple address',
+          metadata: {
+            format: 'base58',
+            isTestnet: false
+          },
+        };
+      }
     }
 
-    // Testnet addresses start with 'r' but are on different network
-    if (/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(address) && options.testnet) {
-      return {
-        network: 'xrp',
-        isValid: true,
-        description: 'Ripple testnet address',
-        metadata: {
-          format: 'base58',
-          isTestnet: true
-        },
-      };
-    }
-
-    // Invalid format but starts with 'r'
-    if (/^r[1-9A-HJ-NP-Za-km-z]{0,34}$/.test(address)) {
-      return {
-        network: 'xrp',
-        isValid: false,
-        description: 'Invalid Ripple address format',
-      };
-    }
-  }
-
-  // Solana - check after other base58 formats to avoid conflicts
-  if (enabledNetwork(['sol'], allowedNetworks)) {
-    // First check if it matches the basic Solana pattern
-    if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
-      // Then check for conflicts
-      if (/^(cosmos|osmo|axelar|juno|stars|r)/.test(address) ||
-          /^(1|3|bc1|tb1)/.test(address)) {
+    // Solana - check after other base58 formats to avoid conflicts
+    if (enabledNetwork(['sol'], allowedNetworks)) {
+      // First check if it matches the basic Solana pattern
+      if (patterns.sol.test(address)) {
+        // Then check for conflicts
+        if (/^(cosmos|osmo|axelar|juno|stars|r|bc1|tb1|ltc1|tltc1)/.test(address)) {
+          return {
+            network: 'sol',
+            isValid: false,
+            description: 'Invalid address format',
+          };
+        }
         return {
           network: 'sol',
-          isValid: false,
-          description: 'Invalid address format',
+          isValid: true,
+          description: 'Solana address',
+          metadata: {
+            format: 'base58',
+            isTestnet: options.testnet || false
+          },
         };
       }
-      return {
-        network: 'sol',
-        isValid: true,
-        description: 'Solana address',
-        metadata: {
-          format: 'base58',
-          isTestnet: options.testnet || false
-        },
-      };
     }
-  }
 
-  // Polkadot
-  if (enabledNetwork(['dot'], allowedNetworks)) {
-    // First check if it matches the basic Polkadot pattern
-    if (/^[1-9A-HJ-NP-Za-km-z]{47,48}$/.test(address)) {
-      // Then check for conflicts
-      if (/^(cosmos|osmo|axelar|juno|stars|r)/.test(address)) {
+    // Polkadot
+    if (enabledNetwork(['dot'], allowedNetworks)) {
+      // First check if it matches the basic Polkadot pattern
+      if (patterns.dot.test(address)) {
+        // Then check for conflicts
+        if (/^(cosmos|osmo|axelar|juno|stars|r|bc1|tb1|ltc1|tltc1)/.test(address)) {
+          return {
+            network: 'dot',
+            isValid: false,
+            description: 'Invalid address format',
+          };
+        }
         return {
           network: 'dot',
-          isValid: false,
-          description: 'Invalid address format',
+          isValid: true,
+          description: 'Polkadot address',
+          metadata: {
+            format: 'ss58',
+            isTestnet: options.testnet || false,
+          },
         };
       }
+    }
+
+    // Algorand
+    if (enabledNetwork(['algo'], allowedNetworks) && patterns.algo.test(address)) {
       return {
-        network: 'dot',
+        network: 'algo',
         isValid: true,
-        description: 'Polkadot address',
+        description: 'Algorand address',
         metadata: {
-          format: 'ss58',
-          isTestnet: options.testnet || false,
+          format: 'base32',
         },
       };
     }
-  }
 
-  // Algorand
-  if (enabledNetwork(['algo'], allowedNetworks) && /^[A-Z2-7]{58}$/.test(address)) {
-    return {
-      network: 'algo',
-      isValid: true,
-      description: 'Algorand address',
-      metadata: {
-        format: 'base32',
-      },
-    };
-  }
-
-  // Stellar
-  if (enabledNetwork(['xlm'], allowedNetworks) && /^G[A-Z2-7]{55}$/.test(address)) {
-    return {
-      network: 'xlm',
-      isValid: true,
-      description: 'Stellar address',
-      metadata: {
-        format: 'base32',
-        type: 'public',
-      },
-    };
-  }
-
-  // Bitcoin Cash (CashAddr format)
-  if (enabledNetwork(['bch'], allowedNetworks) && /^(bitcoincash:)?[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{42}$/.test(address)) {
-    const addr = address.toLowerCase().replace('bitcoincash:', '');
-    if (/^[qp][qpzry9x8gf2tvdw0s3jn54khce6mua7l]{41}$/.test(addr)) {
+    // Stellar
+    if (enabledNetwork(['xlm'], allowedNetworks) && patterns.xlm.test(address)) {
       return {
-        network: 'bch',
+        network: 'xlm',
         isValid: true,
-        description: 'Bitcoin Cash CashAddr address',
+        description: 'Stellar address',
         metadata: {
-          format: 'CashAddr',
-          isTestnet: addr.startsWith('p'),
-          printFormat: `bitcoincash:${addr}`,
-          electronicFormat: addr,
+          format: 'base32',
+          type: 'public',
         },
       };
     }
-  }
 
-  // If no matches found
-  return {
-    network: null,
-    isValid: false,
-    description: 'Unknown address format',
-  };
+    // Bitcoin Cash (CashAddr format)
+    if (enabledNetwork(['bch'], allowedNetworks) && patterns.bch.cashAddr.test(address)) {
+      const addr = address.toLowerCase().replace('bitcoincash:', '');
+      if (patterns.bch.address.test(addr)) {
+        return {
+          network: 'bch',
+          isValid: true,
+          description: 'Bitcoin Cash CashAddr address',
+          metadata: {
+            format: 'CashAddr',
+            isTestnet: addr.startsWith('p'),
+            printFormat: `bitcoincash:${addr}`,
+            electronicFormat: addr,
+          },
+        };
+      }
+    }
+
+    // If no matches found
+    return {
+      network: null,
+      isValid: false,
+      description: 'Unknown address format',
+    };
+  } catch (error) {
+    // If Buffer is not available or other errors occur
+    // Fall back to basic pattern matching
+    return {
+      network: null,
+      isValid: false,
+      description: 'Validation failed: ' + (error as Error).message,
+    };
+  }
 }
 
 /**
