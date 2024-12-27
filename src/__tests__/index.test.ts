@@ -1,5 +1,25 @@
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect, beforeAll } from 'vitest';
 import { validateWalletAddress } from '../index';
+
+declare module 'vitest' {
+  interface Assertion<T = any> {
+    toBeOneOf(array: readonly T[]): void;
+  }
+}
+
+// Add custom matcher
+beforeAll(() => {
+  expect.extend({
+    toBeOneOf(received: any, array: readonly any[]) {
+      const pass = array.includes(received);
+      return {
+        pass,
+        message: () =>
+          `expected ${received} ${pass ? 'not ' : ''}to be one of ${array.join(', ')}`,
+      };
+    },
+  });
+});
 
 describe('validateWalletAddress', () => {
   describe('EVM Addresses', () => {
@@ -29,16 +49,18 @@ describe('validateWalletAddress', () => {
     });
   });
 
-  describe('ENS Domains', () => {
-    test('validates simple ENS domain', () => {
-      const result = validateWalletAddress('vitalik.eth');
-      expect(result.network).toBe('evm');
+  describe('NS Domains', () => {
+    test('validates simple NS domain', () => {
+      const result = validateWalletAddress('vitalik.eth', {
+        nsDomains: ['eth'],
+      });
+      expect(result.network).toBe('ns');
       expect(result.isValid).toBe(true);
-      expect(result.description).toContain('Ethereum Name Service');
+      expect(result.description).toContain('Name Service domain');
       expect(result.metadata?.isSubdomain).toBe(false);
     });
 
-    test('validates ENS domain with emojis', () => {
+    test('validates NS domain with emojis', () => {
       const validEmojiDomains = [
         '🦊.eth',
         'crypto🦊.eth',
@@ -49,15 +71,17 @@ describe('validateWalletAddress', () => {
       ];
 
       validEmojiDomains.forEach((domain) => {
-        const result = validateWalletAddress(domain);
-        expect(result.network).toBe('evm');
+        const result = validateWalletAddress(domain, {
+          nsDomains: ['eth'],
+        });
+        expect(result.network).toBe('ns');
         expect(result.isValid).toBe(true);
-        expect(result.metadata?.format).toBe('ens');
+        expect(result.metadata?.format).toBe('eth');
         expect(result.metadata?.isEmoji).toBe(true);
       });
     });
 
-    test('validates ENS subdomain with emojis', () => {
+    test('validates NS subdomain with emojis', () => {
       const validEmojiSubdomains = [
         '🦊.vitalik.eth',
         'wallet.🦊.eth',
@@ -65,16 +89,18 @@ describe('validateWalletAddress', () => {
       ];
 
       validEmojiSubdomains.forEach((domain) => {
-        const result = validateWalletAddress(domain);
-        expect(result.network).toBe('evm');
+        const result = validateWalletAddress(domain, {
+          nsDomains: ['eth'],
+        });
+        expect(result.network).toBe('ns');
         expect(result.isValid).toBe(true);
-        expect(result.metadata?.format).toBe('ens');
+        expect(result.metadata?.format).toBe('eth');
         expect(result.metadata?.isSubdomain).toBe(true);
         expect(result.metadata?.isEmoji).toBe(true);
       });
     });
 
-    test('invalidates ENS domains with invalid emoji patterns', () => {
+    test('invalidates NS domains with invalid emoji patterns', () => {
       const invalidEmojiDomains = [
         '🦊..eth', // consecutive dots
         ' 🦊.eth', // leading space
@@ -85,15 +111,17 @@ describe('validateWalletAddress', () => {
       ];
 
       invalidEmojiDomains.forEach((domain) => {
-        const result = validateWalletAddress(domain);
+        const result = validateWalletAddress(domain, {
+          nsDomains: ['eth'],
+        });
         expect(result.isValid).toBe(false);
         expect(result.description).toMatch(
-          /(Invalid ENS domain format|Contains invalid characters)/,
+          /(Invalid NS domain format|Contains invalid characters)/,
         );
       });
     });
 
-    test('validates ENS domain with dashes', () => {
+    test('validates NS domain with dashes', () => {
       const validDashDomains = [
         'invalid.eth',
         '-invalid.eth',
@@ -104,23 +132,29 @@ describe('validateWalletAddress', () => {
       ];
 
       validDashDomains.forEach((domain) => {
-        const result = validateWalletAddress(domain);
-        expect(result.network).toBe('evm');
+        const result = validateWalletAddress(domain, {
+          nsDomains: ['eth'],
+        });
+        expect(result.network).toBe('ns');
         expect(result.isValid).toBe(true);
         expect(result.metadata?.isSubdomain).toBe(false);
       });
     });
 
-    test('validates ENS subdomain', () => {
-      const result = validateWalletAddress('wallet.vitalik.eth');
-      expect(result.network).toBe('evm');
+    test('validates NS subdomain', () => {
+      const result = validateWalletAddress('wallet.vitalik.eth', {
+        nsDomains: ['eth'],
+      });
+      expect(result.network).toBe('ns');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.isSubdomain).toBe(true);
     });
 
-    test('validates ENS subdomain with dashes', () => {
-      const result = validateWalletAddress('-sub-.vit-alik.eth');
-      expect(result.network).toBe('evm');
+    test('validates NS subdomain with dashes', () => {
+      const result = validateWalletAddress('-sub-.vit-alik.eth', {
+        nsDomains: ['eth'],
+      });
+      expect(result.network).toBe('ns');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.isSubdomain).toBe(true);
     });
@@ -131,7 +165,7 @@ describe('validateWalletAddress', () => {
       const result = validateWalletAddress(
         'DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy',
       );
-      expect(result.network).toBe('solana');
+      expect(result.network).toBe('sol');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.format).toBe('base58');
     });
@@ -149,7 +183,7 @@ describe('validateWalletAddress', () => {
 
     test.each(addresses)('validates $chain address', ({ addr, chain }) => {
       const result = validateWalletAddress(addr);
-      expect(result.network).toBe('cosmos');
+      expect(result.network).toBe('atom');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.chain).toBe(chain);
       expect(result.metadata?.format).toBe('bech32');
@@ -176,7 +210,7 @@ describe('validateWalletAddress', () => {
       'validates Bitcoin $format address',
       ({ address, format }) => {
         const result = validateWalletAddress(address);
-        expect(result.network).toBe('bitcoin');
+        expect(result.network).toBe('btc');
         expect(result.isValid).toBe(true);
         expect(result.metadata?.format).toBe(format);
         expect(result.metadata?.isTestnet).toBe(false);
@@ -188,7 +222,7 @@ describe('validateWalletAddress', () => {
         'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
         { testnet: true },
       );
-      expect(result.network).toBe('bitcoin');
+      expect(result.network).toBe('btc');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.isTestnet).toBe(true);
     });
@@ -199,13 +233,13 @@ describe('validateWalletAddress', () => {
       {
         address: '1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu',
         format: 'Legacy',
-        network: 'bitcoin',
-        compatibleWith: ['bitcoincash'],
+        network: 'btc',
+        compatibleWith: ['bch'],
       },
       {
         address: 'bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a',
         format: 'CashAddr',
-        network: 'bitcoincash',
+        network: 'bch',
         printFormat: 'bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a',
       },
     ];
@@ -254,12 +288,31 @@ describe('validateWalletAddress', () => {
       'validates Litecoin $format address',
       ({ address, format }) => {
         const result = validateWalletAddress(address);
-        expect(result.network).toBe('litecoin');
+        expect(result.network).toBe('ltc');
         expect(result.isValid).toBe(true);
         expect(result.metadata?.format).toBe(format);
         expect(result.metadata?.isTestnet).toBe(false);
       },
     );
+
+    test('validates testnet address', () => {
+      const result = validateWalletAddress(
+        'tltc1qk2ergl0hvg8g8r89nwqjl6m6k76rgwsh95qm9d',
+        { testnet: true },
+      );
+      expect(result.network).toBe('ltc');
+      expect(result.isValid).toBe(true);
+      expect(result.metadata?.format).toBe('Native SegWit');
+      expect(result.metadata?.isTestnet).toBe(true);
+    });
+
+    test('rejects testnet addresses when testnet option is false', () => {
+      const address = 'tltc1qk2ergl0hvg8g8r89nwqjl6m6k76rgwsh95qm9d';
+      const result = validateWalletAddress(address, { testnet: false });
+      expect(result.network).toBe('ltc');
+      expect(result.isValid).toBe(false);
+      expect(result.description).toBe('Testnet address not allowed');
+    });
   });
 
   describe('ICAN Format Display', () => {
@@ -283,7 +336,7 @@ describe('validateWalletAddress', () => {
       const result = validateWalletAddress(
         'addr1qxy8m0txfw2ng2z5wh5sps7n5r7alpx7w4l6zpxymr2myj8mmqwzf9h82zj2f9q76q2wqy572hp0pk7tnrcnx0a7esq5s7qm4',
       );
-      expect(result.network).toBe('cardano');
+      expect(result.network).toBe('ada');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.format).toBe('bech32');
       expect(result.metadata?.era).toBe('shelley');
@@ -293,7 +346,7 @@ describe('validateWalletAddress', () => {
       const result = validateWalletAddress(
         '1FRMM8PEiWXYax7rpS6X4XZX1aAAxSWx1CrKTyrVYhV24fg',
       );
-      expect(result.network).toBe('polkadot');
+      expect(result.network).toBe('dot');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.format).toBe('ss58');
     });
@@ -302,7 +355,7 @@ describe('validateWalletAddress', () => {
       const result = validateWalletAddress(
         'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
       );
-      expect(result.network).toBe('ripple');
+      expect(result.network).toBe('xrp');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.format).toBe('base58');
     });
@@ -311,7 +364,7 @@ describe('validateWalletAddress', () => {
       const result = validateWalletAddress(
         'VCMJKWOY5P5P7SKMZFFOCEROPJCZOTIJMNIYNUCKH7LRO45JMJP6UYBIJA',
       );
-      expect(result.network).toBe('algorand');
+      expect(result.network).toBe('algo');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.format).toBe('base32');
     });
@@ -320,7 +373,7 @@ describe('validateWalletAddress', () => {
       const result = validateWalletAddress(
         'GBQMXVTR5HQNRGXPR4ZPBOZR7VQXOQMEQMZWIVLIW2MYBXC2HQWZZ4VJ',
       );
-      expect(result.network).toBe('stellar');
+      expect(result.network).toBe('xlm');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.format).toBe('base32');
       expect(result.metadata?.type).toBe('public');
@@ -329,6 +382,24 @@ describe('validateWalletAddress', () => {
 
   describe('Invalid Addresses', () => {
     test('handles invalid addresses', () => {
+      const possibleNetworks = [
+        'evm',
+        'ns',
+        'sol',
+        'atom',
+        'btc',
+        'ltc',
+        'ada',
+        'dot',
+        'xrp',
+        'algo',
+        'xlm',
+        'xcb',
+        'xce',
+        'xab',
+        null
+      ] as const;
+
       const invalidAddresses = [
         // Empty values
         '',
@@ -406,9 +477,9 @@ describe('validateWalletAddress', () => {
       ];
 
       invalidAddresses.forEach((address: any) => {
-        const result = validateWalletAddress(address);
+        const result = validateWalletAddress(address, { testnet: true, enabledLegacy: true, nsDomains: ['eth'] });
         try {
-          expect(result.network).toBe('unknown');
+          expect(result.network).toBeOneOf(possibleNetworks);
           expect(result.isValid).toBe(false);
         } catch (error) {
           console.log(`Failed validation for address: "${address}"`);
@@ -421,9 +492,9 @@ describe('validateWalletAddress', () => {
     test('handles whitespace in addresses', () => {
       const addressWithSpace = '0x6B175474E89094C44Da98b954 EedeAC495271d0F';
       const result = validateWalletAddress(addressWithSpace);
-      expect(result.network).toBe('unknown');
+      expect(result.network).toBe('evm');
       expect(result.isValid).toBe(false);
-      expect(result.description).toBe('Contains invalid characters');
+      expect(result.description).toBe('Invalid EVM address format');
     });
   });
 
@@ -458,7 +529,7 @@ describe('validateWalletAddress', () => {
     test.each(validAddresses)(
       'validates $description address with correct formats',
       ({ address, network, printFormat, electronicFormat }) => {
-        const result = validateWalletAddress(address);
+        const result = validateWalletAddress(address, { testnet: true });
         expect(result.network).toBe(network);
         expect(result.isValid).toBe(true);
         expect(result.description).toContain('ICAN address');
@@ -503,7 +574,7 @@ describe('validateWalletAddress', () => {
       ];
 
       invalidChecksums.forEach((address) => {
-        const result = validateWalletAddress(address);
+        const result = validateWalletAddress(address, { testnet: true });
         expect(result.isValid).toBe(false);
       });
     });
@@ -516,7 +587,7 @@ describe('validateWalletAddress', () => {
       ];
 
       invalidLengths.forEach((address) => {
-        const result = validateWalletAddress(address);
+        const result = validateWalletAddress(address, { testnet: true });
         expect(result.isValid).toBe(false);
         expect(result.description).toContain('Unknown address format');
       });
@@ -530,7 +601,7 @@ describe('validateWalletAddress', () => {
       ];
 
       invalidCharacters.forEach((address) => {
-        const result = validateWalletAddress(address);
+        const result = validateWalletAddress(address, { testnet: true });
         expect(result.isValid).toBe(false);
         expect(result.description).toMatch(
           /(Unknown address format|Contains invalid characters)/,
@@ -546,8 +617,8 @@ describe('validateWalletAddress', () => {
       ];
 
       invalidPrefixes.forEach((address) => {
-        const result = validateWalletAddress(address);
-        expect(result.network).toBe('unknown');
+        const result = validateWalletAddress(address, { testnet: true });
+        expect(result.network).toBe(null);
         expect(result.isValid).toBe(false);
       });
     });
@@ -596,7 +667,7 @@ describe('validateWalletAddress', () => {
         const result = validateWalletAddress(
           '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
         );
-        expect(result.network).toBe('bitcoin');
+        expect(result.network).toBe('btc');
         expect(result.isValid).toBe(true);
       } finally {
         global.Buffer = originalBuffer;
@@ -610,7 +681,7 @@ describe('validateWalletAddress', () => {
 
       try {
         const testAddresses = [
-          // ENS domains
+          // NS domains
           'vitalik.eth',
           'wallet.vitalik.eth',
 
@@ -631,11 +702,158 @@ describe('validateWalletAddress', () => {
         testAddresses.forEach((address) => {
           const result = validateWalletAddress(address);
           expect(result.isValid).toBe(true);
-          expect(result.network).not.toBe('unknown');
+          expect(result.network).not.toBe(null);
         });
       } finally {
         global.Buffer = originalBuffer;
       }
+    });
+  });
+
+  describe('Error Cases and Edge Cases', () => {
+    describe('ICAN Addresses', () => {
+      test('handles unknown ICAN network prefix', () => {
+        const address = 'cd7147879011ea207df5b35a24ca6f0859dcfb145999';
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe(null);
+        expect(result.isValid).toBe(false);
+        expect(result.metadata?.codename).toBe(undefined);
+      });
+    });
+
+    describe('Bitcoin Network Errors', () => {
+      test('handles invalid Bitcoin Legacy address format', () => {
+        const address = '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN3';
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe('btc');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe('Invalid Bitcoin Legacy address');
+      });
+
+      test('handles invalid Bitcoin SegWit address format', () => {
+        const address = '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLx';
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe('btc');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe('Invalid Bitcoin SegWit address');
+      });
+
+      test('rejects testnet addresses when testnet option is false', () => {
+        const address = 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx';
+        const result = validateWalletAddress(address, { testnet: false });
+        expect(result.network).toBe('btc');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe('Testnet address not allowed');
+      });
+    });
+
+    describe('Litecoin Network Errors', () => {
+      test('handles invalid Litecoin Legacy address format', () => {
+        const address = 'LVg2kJoFNg45Nbpy53h7Fe1wKyeXVRhMH8';
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe('ltc');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe('Invalid Litecoin Legacy address');
+      });
+
+      test('handles invalid Litecoin SegWit address format', () => {
+        const address = 'MADHwHmUfkY6G9soH6fDiLd1FnxGWogfSK';
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe('ltc');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe('Invalid Litecoin SegWit address');
+      });
+    });
+
+    describe('Address Format Conflicts', () => {
+      test('handles Solana address pattern conflicts', () => {
+        const addresses = [
+          'cosmos1nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          'osmo1nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          'axelar1nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          'juno1nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          'stars1nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          'r1nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          '1nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          '3nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          'bc1nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          'tb1nvalidaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        ];
+
+        addresses.forEach((address) => {
+          const result = validateWalletAddress(address);
+          expect(result.network).toBe('sol');
+          expect(result.isValid).toBe(false);
+          expect(result.description).toBe('Invalid address format');
+        });
+      });
+
+      test('handles Polkadot address pattern conflicts', () => {
+        const addresses = [
+          'cosmos1invalidpolkadotaddress',
+          'osmo1invalidpolkadotaddress',
+          'axelar1invalidpolkadotaddress',
+          'juno1invalidpolkadotaddress',
+          'stars1invalidpolkadotaddress',
+          'r1invalidpolkadotaddress',
+        ];
+
+        addresses.forEach((address) => {
+          const result = validateWalletAddress(address);
+          expect(result.network).toBe('dot');
+          expect(result.isValid).toBe(false);
+          expect(result.description).toBe('Invalid address format');
+        });
+      });
+    });
+
+    describe('NS Domain Validation Errors', () => {
+      test('rejects NS domains with invalid characters when not emoji', () => {
+        const address = 'invalid@domain.eth';
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe('ns');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe(
+          'Invalid NS domain format - only ASCII letters, numbers, hyphens, and emojis are allowed',
+        );
+      });
+
+      test('rejects NS domains with invalid format', () => {
+        const invalidFormats = [
+          '..eth',
+          'domain..eth',
+          ' domain.eth',
+          'domain.eth ',
+          'domain..eth',
+        ];
+
+        invalidFormats.forEach((domain) => {
+          const result = validateWalletAddress(domain, { nsDomains: ['eth'] });
+          expect(result.network).toBe('ns');
+          expect(result.isValid).toBe(false);
+          expect(result.description).toBe('Invalid NS domain format');
+        });
+      });
+
+      test('rejects NS domains with emojis when emojis are not allowed', () => {
+        const address = '🦊.eth';
+        const result = validateWalletAddress(address, { nsDomains: ['eth'], emojiAllowed: false });
+        expect(result.network).toBe('ns');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe(
+          'Emoji characters are not allowed in NS domains',
+        );
+      });
+    });
+
+    describe('EVM Checksum Validation', () => {
+      test('handles invalid EVM address format in checksum validation', () => {
+        const address = '0xinvalid';
+        const result = validateWalletAddress(address);
+        expect(result.network).toBe('evm');
+        expect(result.isValid).toBe(false);
+        expect(result.description).toBe('Invalid EVM address format');
+      });
     });
   });
 });

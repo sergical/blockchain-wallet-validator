@@ -82,7 +82,7 @@ console.log(btcResult);
 // }
 
 // Validate an ENS address with emoji
-const ensResult = validateWalletAddress('🦊.eth');
+const ensResult = validateWalletAddress('🦊.eth', { nsDomains: ['eth'] });
 console.log(ensResult);
 // {
 //   network: 'evm',
@@ -96,7 +96,7 @@ console.log(ensResult);
 // }
 
 // Validate an ENS address with emoji disabled
-const ensResultNoEmoji = validateWalletAddress('🦊.eth', { emojiAllowed: false });
+const ensResultNoEmoji = validateWalletAddress('🦊.eth', { nsDomains: ['eth'], emojiAllowed: false });
 console.log(ensResultNoEmoji);
 // {
 //   network: 'unknown',
@@ -115,9 +115,11 @@ Validates a blockchain wallet address and returns information about the network 
 
 - `address` (string): The wallet address to validate
 - `options` (optional): Validation options
-  - `testnet` (boolean): Whether to validate as a testnet address (currently only supported for Bitcoin)
-  - `network` (string): Specify the expected network (future use)
-  - `emojiAllowed` (boolean): Whether to allow emoji characters in ENS domains (default: true)
+  - `network` (string[] | null): List of networks to validate against. If empty, validates against all networks. Example: `['btc', 'eth']`
+  - `testnet` (boolean): Whether to validate testnet addresses (default: false)
+  - `enabledLegacy` (boolean): Whether to validate legacy address formats (default: true)
+  - `emojiAllowed` (boolean): Whether to allow emoji characters in NS domains (default: true)
+  - `nsDomains` (string[]): List of Name Service domains to validate against (default: `[]`; please add domain if you intend to use it, for example: `['eth']`)
 
 #### Returns
 
