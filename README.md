@@ -50,9 +50,10 @@ yarn add blockchain-wallet-validator
 ```typescript
 import { validateWalletAddress } from 'blockchain-wallet-validator';
 
-// Validate an Ethereum address
+// Validate an Ethereum address with specific networks enabled
 const evmResult = validateWalletAddress(
   '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97',
+  { network: ['evm', 'eth'] }
 );
 console.log(evmResult);
 // {
@@ -65,12 +66,30 @@ console.log(evmResult);
 //   }
 // }
 
-// Validate a Bitcoin testnet address
-const btcResult = validateWalletAddress(
-  'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
-  { testnet: true },
-);
-console.log(btcResult);
+// Validate a Name Service domain
+const nsResult = validateWalletAddress('vitalik.eth', {
+  nsDomains: ['eth'],
+  network: ['ns']
+});
+console.log(nsResult);
+// {
+//   network: 'ns',
+//   isValid: true,
+//   description: 'Ethereum Name Service domain',
+//   metadata: {
+//     format: 'ens',
+//     isSubdomain: false,
+//     isEmoji: false
+//   }
+// }
+
+// Validate with multiple options
+const result = validateWalletAddress('tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx', {
+  network: ['btc'],
+  testnet: true,
+  enabledLegacy: false
+});
+console.log(result);
 // {
 //   network: 'bitcoin',
 //   isValid: true,
@@ -79,29 +98,6 @@ console.log(btcResult);
 //     format: 'Native SegWit',
 //     isTestnet: true
 //   }
-// }
-
-// Validate an ENS address with emoji
-const ensResult = validateWalletAddress('🦊.eth', { nsDomains: ['eth'] });
-console.log(ensResult);
-// {
-//   network: 'evm',
-//   isValid: true,
-//   description: 'Ethereum Name Service domain',
-//   metadata: {
-//     format: 'ens',
-//     isSubdomain: false,
-//     isEmoji: true
-//   }
-// }
-
-// Validate an ENS address with emoji disabled
-const ensResultNoEmoji = validateWalletAddress('🦊.eth', { nsDomains: ['eth'], emojiAllowed: false });
-console.log(ensResultNoEmoji);
-// {
-//   network: 'unknown',
-//   isValid: false,
-//   description: 'Emoji characters are not allowed in ENS domains'
 // }
 ```
 
@@ -115,11 +111,11 @@ Validates a blockchain wallet address and returns information about the network 
 
 - `address` (string): The wallet address to validate
 - `options` (optional): Validation options
-  - `network` (string[] | null): List of networks to validate against. If empty, validates against all networks. Example: `['btc', 'eth']`
+  - `network` (string[] | null): Default: null (no exclusion). List of networks to validate against. Example: `['btc', 'eth']`
   - `testnet` (boolean): Whether to validate testnet addresses (default: false)
   - `enabledLegacy` (boolean): Whether to validate legacy address formats (default: true)
   - `emojiAllowed` (boolean): Whether to allow emoji characters in NS domains (default: true)
-  - `nsDomains` (string[]): List of Name Service domains to validate against (default: `[]`; please add domain if you intend to use it, for example: `['eth']`)
+  - `nsDomains` (string[]): List of Name Service domains to validate against (default: `[]`)
 
 #### Returns
 
