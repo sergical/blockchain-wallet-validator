@@ -13,7 +13,7 @@ A comprehensive TypeScript library for validating blockchain wallet addresses ac
 - 🚀 **Lightweight**: < 10KB minified + gzipped
 - 🔒 **Type-safe**: Written in TypeScript with full type definitions
 - ⚡ **Fast**: No heavy dependencies
-- 🧪 **Well-tested**: 100% test coverage
+- 🧪 **Well-tested**: Production-ready test coverage
 - 🌐 **Multi-network support**:
   - Algorand
   - Bitcoin (Legacy, SegWit, Native SegWit)
@@ -203,7 +203,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Requirements
 
-- Node.js >= 16
+- Node.js >= 17
 - pnpm >= 8.10.0 (recommended) or npm/yarn
 
 ## Security
