@@ -1,6 +1,6 @@
 import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
-import prettierConfig from "eslint-plugin-prettier/recommended";
+import prettier from "eslint-plugin-prettier";
 
 export default [
   {
@@ -12,9 +12,13 @@ export default [
         sourceType: "module",
       },
     },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+      "prettier": prettier
+    },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      ...prettierConfig.rules,
+      "prettier/prettier": "error",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
     },
