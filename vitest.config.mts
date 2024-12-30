@@ -13,6 +13,12 @@ export default defineConfig({
         '**/coverage/**',
         '**/*.d.ts',
       ],
+      thresholds: {
+        branches: 90,
+        functions: 66,
+        lines: 80,
+        statements: 80
+      }
     },
   },
 });
