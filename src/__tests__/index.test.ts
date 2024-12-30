@@ -534,8 +534,6 @@ describe('validateWalletAddress', () => {
           expect(result.network).toBeOneOf(possibleNetworks);
           expect(result.isValid).toBe(false);
         } catch (error) {
-          console.log(`Failed validation for address: "${address}"`);
-          console.log('Result:', result);
           throw error;
         }
       });
@@ -1467,11 +1465,6 @@ describe('Network-Specific Edge Cases', () => {
 
       domains.forEach((domain) => {
         const result = validateWalletAddress(domain, { nsDomains: ['eth'] });
-        console.log({
-          domain: domain.length,
-          isValid: result.isValid,
-          description: result.description,
-        }); // Debug log
         expect(result.network).toBe('ns');
         expect(result.isValid).toBe(false);
         expect(result.description).toBe(
