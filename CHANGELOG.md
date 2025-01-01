@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2024-12-30
+
+### Enhancements
+
+- Added flag to enable/disable emoji verification
+- Added Litecoin addresses
+- Added Bitcoin Cash addresses
+- Added meta field compatibleWith for same addresses
+- Added printFormat and electronicFormat for ICAN
+- Removed Node.js 16 support
+- Removed Buffer usage
+
+### Bug fixes
+
+- EVM addresses wasn't compatible with EIP-55
+
 ## [1.0.1] - 2024-12-22
 
 ### Enhancements

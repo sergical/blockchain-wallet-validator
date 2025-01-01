@@ -1,0 +1,27 @@
+coverage:
+  status:
+    project:
+      default:
+        # same thresholds as in vitest config
+        target: 80%
+        threshold: 1%
+        paths:
+          - "src"
+    patch:
+      default:
+        target: 80%
+        threshold: 1%
+        paths:
+          - "src"
+
+ignore:
+  - "dist"
+  - "node_modules"
+  - "**/*.d.ts"
+  - "**/*.test.ts"
+  - "coverage"
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true

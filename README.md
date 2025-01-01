@@ -53,7 +53,7 @@ import { validateWalletAddress } from 'blockchain-wallet-validator';
 // Validate an Ethereum address with specific networks enabled
 const evmResult = validateWalletAddress(
   '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97',
-  { network: ['evm', 'eth'] }
+  { network: ['evm', 'eth'] },
 );
 console.log(evmResult);
 // {
@@ -69,7 +69,7 @@ console.log(evmResult);
 // Validate a Name Service domain
 const nsResult = validateWalletAddress('vitalik.eth', {
   nsDomains: ['eth'],
-  network: ['ns']
+  network: ['ns'],
 });
 console.log(nsResult);
 // {
@@ -84,11 +84,14 @@ console.log(nsResult);
 // }
 
 // Validate with multiple options
-const result = validateWalletAddress('tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx', {
-  network: ['btc'],
-  testnet: true,
-  enabledLegacy: false
-});
+const result = validateWalletAddress(
+  'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
+  {
+    network: ['btc'],
+    testnet: true,
+    enabledLegacy: false,
+  },
+);
 console.log(result);
 // {
 //   network: 'bitcoin',
@@ -130,25 +133,25 @@ Returns a `NetworkInfo` object containing:
 
 ## Supported Networks
 
-| Network               | Address Format  | Example                                                    |
-| --------------------- | --------------- | ---------------------------------------------------------- |
-| EVM                   | Hex (0x...)     | 0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97                 |
-| ENS                   | name.eth        | vitalik.eth                                                |
-| Bitcoin Legacy        | Base58 (1...)   | 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2                         |
-| Bitcoin SegWit        | Base58 (3...)   | 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy                         |
-| Bitcoin Native SegWit | Bech32 (bc1...) | bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq                 |
-| Bitcoin Cash          | CashAddr        | bitcoincash:qr7fzmep8g7h7ymfxy74lgc0v950j3r4ecr4wd9r3z     |
-| Litecoin Legacy       | Base58 (L...)   | LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz                         |
-| Litecoin SegWit       | Base58 (M...)   | MJRSgZ3UUFcTBTBAaN38XAXvHAaZe6TMbM                         |
-| Litecoin Native SegWit| Bech32 (ltc1...)| ltc1qgpn2phk8c7k966xjkz0p5zkf5w7rzeslwj42h                 |
-| Solana                | Base58          | DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy               |
-| Cosmos                | Bech32          | cosmos1yw6g44c4pqd2rxgrcqekxg9k8f4fd8xpx2k8c3              |
-| Cardano               | Bech32          | addr1...                                                   |
-| Polkadot              | SS58            | 1FRMM8PEiWXYax7rpS6X4XZX1aAAxSWx1CrKTyrVYhV24fg            |
-| Ripple                | Base58          | rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh                         |
-| Algorand              | Base32          | VCMJKWOY5P5P7SKMZFFOCEROPJCZOTIJMNIYNUCKH7LRO45JMJP6UYBIJA |
-| Stellar               | Base32          | GBQMXVTR5HQNRGXPR4ZPBOZR7VQXOQMEQMZWIVLIW2MYBXC2HQWZZ4VJ   |
-| Core                  | ICAN            | cb7147879011ea207df5b35a24ca6f0859dcfb145999               |
+| Network                | Address Format   | Example                                                    |
+| ---------------------- | ---------------- | ---------------------------------------------------------- |
+| EVM                    | Hex (0x...)      | 0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97                 |
+| ENS                    | name.eth         | vitalik.eth                                                |
+| Bitcoin Legacy         | Base58 (1...)    | 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2                         |
+| Bitcoin SegWit         | Base58 (3...)    | 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy                         |
+| Bitcoin Native SegWit  | Bech32 (bc1...)  | bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq                 |
+| Bitcoin Cash           | CashAddr         | bitcoincash:qr7fzmep8g7h7ymfxy74lgc0v950j3r4ecr4wd9r3z     |
+| Litecoin Legacy        | Base58 (L...)    | LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz                         |
+| Litecoin SegWit        | Base58 (M...)    | MJRSgZ3UUFcTBTBAaN38XAXvHAaZe6TMbM                         |
+| Litecoin Native SegWit | Bech32 (ltc1...) | ltc1qgpn2phk8c7k966xjkz0p5zkf5w7rzeslwj42h                 |
+| Solana                 | Base58           | DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy               |
+| Cosmos                 | Bech32           | cosmos1yw6g44c4pqd2rxgrcqekxg9k8f4fd8xpx2k8c3              |
+| Cardano                | Bech32           | addr1...                                                   |
+| Polkadot               | SS58             | 1FRMM8PEiWXYax7rpS6X4XZX1aAAxSWx1CrKTyrVYhV24fg            |
+| Ripple                 | Base58           | rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh                         |
+| Algorand               | Base32           | VCMJKWOY5P5P7SKMZFFOCEROPJCZOTIJMNIYNUCKH7LRO45JMJP6UYBIJA |
+| Stellar                | Base32           | GBQMXVTR5HQNRGXPR4ZPBOZR7VQXOQMEQMZWIVLIW2MYBXC2HQWZZ4VJ   |
+| Core                   | ICAN             | cb7147879011ea207df5b35a24ca6f0859dcfb145999               |
 
 ## Performance
 
@@ -195,7 +198,7 @@ pnpm lint
 
 ## License
 
-MIT
+CORE
 
 ## Contributing
 
