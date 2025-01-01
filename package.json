@@ -1,6 +1,6 @@
 {
   "name": "blockchain-wallet-validator",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A comprehensive blockchain wallet address validator",
   "type": "module",
   "main": "dist/index.cjs",
@@ -48,7 +48,7 @@
     "ican"
   ],
   "author": "Sergiy Dybskiy",
-  "license": "MIT",
+  "license": "CORE",
   "dependencies": {
     "bs58check": "^4.0.0",
     "ethereum-cryptography": "^3.0.0"
