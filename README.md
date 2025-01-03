@@ -1,7 +1,7 @@
 # Blockchain Wallet Validator
 
 [![npm version](https://badge.fury.io/js/blockchain-wallet-validator.svg)](https://badge.fury.io/js/blockchain-wallet-validator)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: CORE](https://img.shields.io/badge/License-CORE-yellow)](LICENSE)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/blockchain-wallet-validator)](https://bundlephobia.com/package/blockchain-wallet-validator)
 [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/sergical/blockchain-wallet-validator)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
@@ -10,18 +10,20 @@ A comprehensive TypeScript library for validating blockchain wallet addresses ac
 
 ## Features
 
-- 🚀 **Lightweight**: < 10KB minified + gzipped
+- 🚀 **Lightweight**: < 20KB minified + gzipped
 - 🔒 **Type-safe**: Written in TypeScript with full type definitions
 - ⚡ **Fast**: No heavy dependencies
 - 🧪 **Well-tested**: Production-ready test coverage
 - 🌐 **Multi-network support**:
   - Algorand
   - Bitcoin (Legacy, SegWit, Native SegWit)
+  - Bitcoin Cash
   - Cardano
   - Core (ICAN)
   - Cosmos ecosystem (Cosmos, Osmosis, Juno, etc.)
-  - ENS Domains (including subdomains and emoji support)
+  - ENS-based Domains (including subdomains and emoji support)
   - EVM (Ethereum, Polygon, BSC, etc.)
+  - Litecoin (Legacy, SegWit, Native SegWit)
   - Polkadot
   - Ripple (XRP)
   - Solana
@@ -135,23 +137,23 @@ Returns a `NetworkInfo` object containing:
 
 | Network                | Address Format   | Example                                                    |
 | ---------------------- | ---------------- | ---------------------------------------------------------- |
-| EVM                    | Hex (0x...)      | 0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97                 |
-| ENS                    | name.eth         | vitalik.eth                                                |
-| Bitcoin Legacy         | Base58 (1...)    | 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2                         |
-| Bitcoin SegWit         | Base58 (3...)    | 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy                         |
-| Bitcoin Native SegWit  | Bech32 (bc1...)  | bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq                 |
+| Algorand               | Base32           | VCMJKWOY5P5P7SKMZFFOCEROPJCZOTIJMNIYNUCKH7LRO45JMJP6UYBIJA |
 | Bitcoin Cash           | CashAddr         | bitcoincash:qr7fzmep8g7h7ymfxy74lgc0v950j3r4ecr4wd9r3z     |
-| Litecoin Legacy        | Base58 (L...)    | LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz                         |
-| Litecoin SegWit        | Base58 (M...)    | MJRSgZ3UUFcTBTBAaN38XAXvHAaZe6TMbM                         |
-| Litecoin Native SegWit | Bech32 (ltc1...) | ltc1qgpn2phk8c7k966xjkz0p5zkf5w7rzeslwj42h                 |
-| Solana                 | Base58           | DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy               |
-| Cosmos                 | Bech32           | cosmos1yw6g44c4pqd2rxgrcqekxg9k8f4fd8xpx2k8c3              |
+| Bitcoin Legacy         | Base58 (1...)    | 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2                         |
+| Bitcoin Native SegWit  | Bech32 (bc1...)  | bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq                 |
+| Bitcoin SegWit         | Base58 (3...)    | 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy                         |
 | Cardano                | Bech32           | addr1...                                                   |
+| Core                   | ICAN             | cb7147879011ea207df5b35a24ca6f0859dcfb145999               |
+| Cosmos                 | Bech32           | cosmos1yw6g44c4pqd2rxgrcqekxg9k8f4fd8xpx2k8c3              |
+| ENS                    | name.ns          | vitalik.eth                                                |
+| EVM                    | Hex (0x...)      | 0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97                 |
+| Litecoin Legacy        | Base58 (L...)    | LaMT348PWRnrqeeWArpwQPbuanpXDZGEUz                         |
+| Litecoin Native SegWit | Bech32 (ltc1...) | ltc1qgpn2phk8c7k966xjkz0p5zkf5w7rzeslwj42h                 |
+| Litecoin SegWit        | Base58 (M...)    | MJRSgZ3UUFcTBTBAaN38XAXvHAaZe6TMbM                         |
 | Polkadot               | SS58             | 1FRMM8PEiWXYax7rpS6X4XZX1aAAxSWx1CrKTyrVYhV24fg            |
 | Ripple                 | Base58           | rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh                         |
-| Algorand               | Base32           | VCMJKWOY5P5P7SKMZFFOCEROPJCZOTIJMNIYNUCKH7LRO45JMJP6UYBIJA |
+| Solana                 | Base58           | DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy               |
 | Stellar                | Base32           | GBQMXVTR5HQNRGXPR4ZPBOZR7VQXOQMEQMZWIVLIW2MYBXC2HQWZZ4VJ   |
-| Core                   | ICAN             | cb7147879011ea207df5b35a24ca6f0859dcfb145999               |
 
 ## Performance
 
@@ -198,7 +200,7 @@ pnpm lint
 
 ## License
 
-CORE
+Licensed under the [CORE License](LICENSE).
 
 ## Contributing
 
@@ -206,7 +208,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Requirements
 
-- Node.js >= 18
+- Node.js >= 18 (Node.js is optional, code can run in browser)
 - pnpm >= 8.10.0 (recommended) or npm/yarn
 
 ## Security
