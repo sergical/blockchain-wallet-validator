@@ -4,13 +4,14 @@
 [![License: CORE](https://img.shields.io/badge/License-CORE-yellow)](LICENSE)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/blockchain-wallet-validator)](https://bundlephobia.com/package/blockchain-wallet-validator)
 [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/sergical/blockchain-wallet-validator)
+[![codecov](https://codecov.io/github/sergical/blockchain-wallet-validator/graph/badge.svg)](https://github.com/sergical/blockchain-wallet-validator)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 
 A comprehensive TypeScript library for validating blockchain wallet addresses across multiple networks.
 
 ## Features
 
-- 🚀 **Lightweight**: < 20KB minified + gzipped
+- 🚀 **Lightweight**: < 10KB minified + gzipped
 - 🔒 **Type-safe**: Written in TypeScript with full type definitions
 - ⚡ **Fast**: No heavy dependencies
 - 🧪 **Well-tested**: Production-ready test coverage
@@ -21,8 +22,8 @@ A comprehensive TypeScript library for validating blockchain wallet addresses ac
   - Cardano
   - Core (ICAN)
   - Cosmos ecosystem (Cosmos, Osmosis, Juno, etc.)
-  - ENS-based Domains (including subdomains and emoji support)
-  - EVM (Ethereum, Polygon, BSC, etc.)
+  - NS domains on ENS standard (including subdomains and emoji support)
+  - EVM-compatible chains (Ethereum, Polygon, BSC, etc.)
   - Litecoin (Legacy, SegWit, Native SegWit)
   - Polkadot
   - Ripple (XRP)
@@ -116,11 +117,11 @@ Validates a blockchain wallet address and returns information about the network 
 
 - `address` (string): The wallet address to validate
 - `options` (optional): Validation options
-  - `network` (string[] | null): Default: null (no exclusion). List of networks to validate against. Example: `['btc', 'eth']`
-  - `testnet` (boolean): Whether to validate testnet addresses (default: false)
-  - `enabledLegacy` (boolean): Whether to validate legacy address formats (default: true)
-  - `emojiAllowed` (boolean): Whether to allow emoji characters in NS domains (default: true)
-  - `nsDomains` (string[]): List of Name Service domains to validate against (default: `[]`)
+  - `network` (string[] | null): Networks to validate against. Default: null (validates all networks). Example: `['btc', 'eth']`
+  - `testnet` (boolean): Whether to validate testnet addresses. Default: false
+  - `enabledLegacy` (boolean): Whether to validate legacy address formats. Default: true
+  - `emojiAllowed` (boolean): Whether to allow emoji characters in NS domains. Default: true
+  - `nsDomains` (string[]): List of Name Service domains to validate against. Default: `[]`
 
 #### Returns
 
@@ -206,10 +207,13 @@ Licensed under the [CORE License](LICENSE).
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Requirements
+## Environment
 
-- Node.js >= 18 (Node.js is optional, code can run in browser)
-- pnpm >= 8.10.0 (recommended) or npm/yarn
+- 🌐 **Browser**: Works directly in all modern browsers, no Node.js required
+- 📦 **Node.js**: Optional - v18+ recommended if using in Node environment
+- 📥 **Package Manager**: If using Node.js, recommended:
+  - pnpm (v8.10.0+)
+  - npm or yarn are also supported
 
 ## Security
 
