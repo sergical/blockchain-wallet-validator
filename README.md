@@ -28,6 +28,7 @@ A comprehensive TypeScript library for validating blockchain wallet addresses ac
   - Ripple (XRP)
   - Solana
   - Stellar
+  - Tron
 - 📦 **Modern package**:
   - ESM and CommonJS support
   - Tree-shakeable
@@ -154,6 +155,7 @@ Returns a `NetworkInfo` object containing:
 | Ripple                 | Base58           | rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh                         |
 | Solana                 | Base58           | DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy               |
 | Stellar                | Base32           | GBQMXVTR5HQNRGXPR4ZPBOZR7VQXOQMEQMZWIVLIW2MYBXC2HQWZZ4VJ   |
+| Tron                   | Base58 (T...)    | TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoY                         |
 
 ## Performance
 
