@@ -159,7 +159,7 @@ Returns a `NetworkInfo` object containing:
 
 ## Performance
 
-- Bundle size: < 10KB minified + gzipped
+- Bundle size: < 11KB minified + gzipped
 - No runtime dependencies except:
   - `bs58check`: For Bitcoin address validation
   - `ethereum-cryptography`: For EVM checksum validation

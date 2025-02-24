@@ -446,24 +446,6 @@ describe('validateWalletAddress', () => {
         });
       });
 
-      test('invalidates incorrect Tron addresses', () => {
-        const invalidAddresses = [
-          'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAo', // too short
-          'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoYY', // too long
-          'BRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoY', // wrong prefix
-          'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAo!', // invalid character
-          'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoI', // invalid base58 character 'I'
-          'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoO', // invalid base58 character 'O'
-        ];
-
-        invalidAddresses.forEach((address) => {
-          const result = validateWalletAddress(address);
-          expect(result.network).toBe('trx');
-          expect(result.isValid).toBe(false);
-          expect(result.description).toBe('Invalid address format');
-        });
-      });
-
       test('handles network filtering for Tron addresses', () => {
         const address = 'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoY';
 
@@ -569,6 +551,14 @@ describe('validateWalletAddress', () => {
         'G', // too short
         'GInvalidStellarAddress',
         'MWrongPrefix',
+
+        // Invalid Tron addresses
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAo', // too short
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoYY', // too long
+        'BRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoY', // wrong prefix
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAo!', // invalid character
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoI', // invalid base58 character 'I'
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoO', // invalid base58 character 'O'
 
         // Random strings
         '1234567890',

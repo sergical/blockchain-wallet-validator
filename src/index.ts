@@ -585,27 +585,6 @@ export function validateWalletAddress(
       }
     }
 
-    // Bitcoin Cash (CashAddr format)
-    if (
-      enabledNetwork(['bch'], allowedNetworks) &&
-      patterns.bch.cashAddr.test(address)
-    ) {
-      const addr = address.toLowerCase().replace('bitcoincash:', '');
-      if (patterns.bch.address.test(addr)) {
-        return {
-          network: 'bch',
-          isValid: true,
-          description: 'Bitcoin Cash CashAddr address',
-          metadata: {
-            format: 'CashAddr',
-            isTestnet: addr.startsWith('p'),
-            printFormat: `bitcoincash:${addr}`,
-            electronicFormat: addr,
-          },
-        };
-      }
-    }
-
     // Tron - check before other base58 formats to avoid conflicts
     if (enabledNetwork(['trx', 'tron'], allowedNetworks)) {
       // Check if it looks like a Tron address (starts with T or has Tron-like format)
@@ -713,6 +692,27 @@ export function validateWalletAddress(
           type: 'public',
         },
       };
+    }
+
+    // Bitcoin Cash (CashAddr format)
+    if (
+      enabledNetwork(['bch'], allowedNetworks) &&
+      patterns.bch.cashAddr.test(address)
+    ) {
+      const addr = address.toLowerCase().replace('bitcoincash:', '');
+      if (patterns.bch.address.test(addr)) {
+        return {
+          network: 'bch',
+          isValid: true,
+          description: 'Bitcoin Cash CashAddr address',
+          metadata: {
+            format: 'CashAddr',
+            isTestnet: addr.startsWith('p'),
+            printFormat: `bitcoincash:${addr}`,
+            electronicFormat: addr,
+          },
+        };
+      }
     }
 
     // If no matches found
