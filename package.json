@@ -1,6 +1,6 @@
 {
   "name": "blockchain-wallet-validator",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A comprehensive blockchain wallet address validator",
   "type": "module",
   "main": "dist/index.cjs",
@@ -39,6 +39,7 @@
     "solana",
     "cardano",
     "polkadot",
+    "tron",
     "cosmos",
     "stellar",
     "algorand",
