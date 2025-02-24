@@ -1,5 +1,5 @@
-import { keccak256 } from 'ethereum-cryptography/keccak';
 import base58check from 'bs58check';
+import { keccak256 } from 'ethereum-cryptography/keccak';
 
 interface NetworkInfo {
   network: string | null;
@@ -37,6 +37,7 @@ const patterns = {
   xlm: /^G[A-Z2-7]{55}$/,
   ican: /^(cb|ce|ab)[0-9]{2}[a-f0-9]{40}$/i,
   dot: /^[1-9A-HJ-NP-Za-km-z]{47,48}$/,
+  tron: /^T[1-9A-HJ-NP-Za-km-z]{33}$/,
   btc: {
     legacy: /^[1][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
     segwit: /^[3][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
@@ -584,11 +585,37 @@ export function validateWalletAddress(
       }
     }
 
+    // Tron - check before other base58 formats to avoid conflicts
+    if (enabledNetwork(['trx', 'tron'], allowedNetworks)) {
+      // Check if it looks like a Tron address (starts with T or has Tron-like format)
+      const tronLikePattern = /^[A-Z][1-9A-HJ-NP-Za-km-z]{33}$/;
+      if (address.startsWith('T') || tronLikePattern.test(address)) {
+        if (patterns.tron.test(address)) {
+          // Valid Tron address (starts with T and matches exact pattern)
+          return {
+            network: 'trx',
+            isValid: true,
+            description: 'Tron address',
+            metadata: {
+              format: 'base58',
+              isTestnet: options.testnet || false,
+            },
+          };
+        }
+        // Invalid Tron address (wrong prefix, length, or invalid characters)
+        return {
+          network: 'trx',
+          isValid: false,
+          description: 'Invalid address format',
+        };
+      }
+    }
+
     // Solana - check after other base58 formats to avoid conflicts
     if (enabledNetwork(['sol'], allowedNetworks)) {
       // First check if it matches the basic Solana pattern
       if (patterns.sol.test(address)) {
-        // Then check for conflicts
+        // Then check for conflicts with other network prefixes
         if (
           /^(cosmos|osmo|axelar|juno|stars|r|bc1|tb1|ltc1|tltc1)/.test(address)
         ) {

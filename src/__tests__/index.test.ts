@@ -1,10 +1,10 @@
 import {
-  describe,
-  test,
-  expect,
+  afterEach,
   beforeAll,
   beforeEach,
-  afterEach,
+  describe,
+  expect,
+  test,
 } from 'vitest';
 import { validateWalletAddress } from '../index';
 
@@ -426,6 +426,43 @@ describe('validateWalletAddress', () => {
       expect(result.metadata?.format).toBe('base32');
       expect(result.metadata?.type).toBe('public');
     });
+
+    describe('Tron Addresses', () => {
+      test('validates Tron address', () => {
+        const validAddresses = [
+          'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoY',
+          'TNPeeaaFB7K9cmo4uQpcU32zHq5ApCJHsS',
+          'TDGmmTC7xDgQGwH4FYRGuE7SqN8DkACVnX',
+        ];
+
+        validAddresses.forEach((address) => {
+          const result = validateWalletAddress(address, {
+            network: ['trx', 'tron'],
+          });
+          expect(result.network).toBe('trx');
+          expect(result.isValid).toBe(true);
+          expect(result.description).toBe('Tron address');
+          expect(result.metadata?.format).toBe('base58');
+        });
+      });
+
+      test('handles network filtering for Tron addresses', () => {
+        const address = 'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoY';
+
+        // Should validate when network filter includes 'trx' or 'tron'
+        const result1 = validateWalletAddress(address, { network: ['trx'] });
+        expect(result1.isValid).toBe(true);
+
+        const result2 = validateWalletAddress(address, { network: ['tron'] });
+        expect(result2.isValid).toBe(true);
+
+        // Should not validate when network filter excludes Tron
+        const result3 = validateWalletAddress(address, {
+          network: ['btc', 'eth'],
+        });
+        expect(result3.isValid).toBe(false);
+      });
+    });
   });
 
   describe('Invalid Addresses', () => {
@@ -445,6 +482,8 @@ describe('validateWalletAddress', () => {
         'xcb',
         'xce',
         'xab',
+        'trx',
+        'tron',
         null,
       ] as const;
 
@@ -512,6 +551,14 @@ describe('validateWalletAddress', () => {
         'G', // too short
         'GInvalidStellarAddress',
         'MWrongPrefix',
+
+        // Invalid Tron addresses
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAo', // too short
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoYY', // too long
+        'BRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoY', // wrong prefix
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAo!', // invalid character
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoI', // invalid base58 character 'I'
+        'TRWBqiqoFZysoAeyR1J35ibuyc8EvhUAoO', // invalid base58 character 'O'
 
         // Random strings
         '1234567890',
