@@ -301,6 +301,7 @@ export function validateWalletAddress(
           description: 'Testnet address not allowed',
         };
       }
+      const isEnterprise = address.startsWith('ce');
       const isChecksumValid = validateICANChecksum(address);
       const prefix = address.slice(0, 2).toLowerCase();
       return {
@@ -319,6 +320,7 @@ export function validateWalletAddress(
                   ? 'Devin'
                   : undefined,
           isTestnet,
+          isEnterprise,
           printFormat:
             address
               .toUpperCase()
