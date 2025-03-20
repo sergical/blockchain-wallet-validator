@@ -604,6 +604,7 @@ describe('validateWalletAddress', () => {
         printFormat:
           'CB71\u00A04787\u00A09011\u00A0EA20\u00A07DF5\u00A0B35A\u00A024CA\u00A06F08\u00A059DC\u00A0FB14\u00A05999',
         electronicFormat: 'CB7147879011EA207DF5B35A24CA6F0859DCFB145999',
+        isEnterprise: false,
       },
       {
         address: 'ce450000000000000000000000000000000000000000',
@@ -612,6 +613,7 @@ describe('validateWalletAddress', () => {
         printFormat:
           'CE45\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000\u00A00000',
         electronicFormat: 'CE450000000000000000000000000000000000000000',
+        isEnterprise: true,
       },
       {
         address: 'ab792215c43fc213c02182c8389f2bc32408e2c50922',
@@ -620,12 +622,13 @@ describe('validateWalletAddress', () => {
         printFormat:
           'AB79\u00A02215\u00A0C43F\u00A0C213\u00A0C021\u00A082C8\u00A0389F\u00A02BC3\u00A02408\u00A0E2C5\u00A00922',
         electronicFormat: 'AB792215C43FC213C02182C8389F2BC32408E2C50922',
+        isEnterprise: false,
       },
     ];
 
     test.each(validAddresses)(
       'validates $description address with correct formats',
-      ({ address, network, printFormat, electronicFormat }) => {
+      ({ address, network, printFormat, electronicFormat, isEnterprise }) => {
         const result = validateWalletAddress(address, { testnet: true });
         expect(result.network).toBe(network);
         expect(result.isValid).toBe(true);
@@ -633,6 +636,7 @@ describe('validateWalletAddress', () => {
         expect(result.metadata?.format).toBe('ican');
         expect(result.metadata?.printFormat).toBe(printFormat);
         expect(result.metadata?.electronicFormat).toBe(electronicFormat);
+        expect(result.metadata?.isEnterprise).toBe(isEnterprise);
       },
     );
 
