@@ -6,7 +6,7 @@ import {
   expect,
   test,
 } from 'vitest';
-import { validateWalletAddress } from '../index';
+import { validateEVMChecksum, validateWalletAddress } from '../index';
 
 declare module 'vitest' {
   interface Assertion<T = any> {
@@ -206,6 +206,48 @@ describe('validateWalletAddress', () => {
         'NS domain exceeds maximum total length of 255 characters',
       );
     });
+
+    test('applies custom max label length per domain', () => {
+      const result = validateWalletAddress('toolong.eth', {
+        nsDomains: [{ domain: 'eth', maxLabelLength: 4 }],
+      });
+      expect(result.network).toBe('ns');
+      expect(result.isValid).toBe(false);
+      expect(result.description).toBe(
+        'NS domain label exceeds maximum length of 4 characters',
+      );
+    });
+
+    test('applies custom max total length per domain', () => {
+      const result = validateWalletAddress('reallylongdomain.eth', {
+        nsDomains: [{ domain: 'eth', maxTotalLength: 10 }],
+      });
+      expect(result.network).toBe('ns');
+      expect(result.isValid).toBe(false);
+      expect(result.description).toBe(
+        'NS domain exceeds maximum total length of 10 characters',
+      );
+    });
+
+    test('allows domain-specific emoji flag override', () => {
+      const disabledEmojiResult = validateWalletAddress('🦊.eth', {
+        nsDomains: [{ domain: 'eth', emojiAllowed: false }],
+      });
+      expect(disabledEmojiResult.network).toBe('ns');
+      expect(disabledEmojiResult.isValid).toBe(false);
+      expect(disabledEmojiResult.description).toBe(
+        'Emoji characters are disabled for NS domain eth',
+      );
+
+      const enabledEmojiResult = validateWalletAddress('🦊.eth', {
+        emojiAllowed: false,
+        nsDomains: [{ domain: 'eth', emojiAllowed: true }],
+      });
+      expect(enabledEmojiResult.network).toBe('ns');
+      expect(enabledEmojiResult.isValid).toBe(true);
+      expect(enabledEmojiResult.metadata?.isEmoji).toBe(true);
+      expect(enabledEmojiResult.metadata?.emojiAllowed).toBe(true);
+    });
   });
 
   describe('Solana Addresses', () => {
@@ -216,6 +258,16 @@ describe('validateWalletAddress', () => {
       expect(result.network).toBe('sol');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.format).toBe('base58');
+    });
+
+    test('rejects Solana-like address with conflicting prefix', () => {
+      const conflictingAddress = 'r' + '1'.repeat(33);
+      const result = validateWalletAddress(conflictingAddress, {
+        network: ['sol'],
+      });
+      expect(result.network).toBe('sol');
+      expect(result.isValid).toBe(false);
+      expect(result.description).toBe('Invalid address format');
     });
   });
 
@@ -397,6 +449,16 @@ describe('validateWalletAddress', () => {
       expect(result.network).toBe('dot');
       expect(result.isValid).toBe(true);
       expect(result.metadata?.format).toBe('ss58');
+    });
+
+    test('rejects Polkadot-like address with conflicting prefix', () => {
+      const conflictingAddress = 'cosmos' + '1'.repeat(41);
+      const result = validateWalletAddress(conflictingAddress, {
+        network: ['dot'],
+      });
+      expect(result.network).toBe('dot');
+      expect(result.isValid).toBe(false);
+      expect(result.description).toBe('Invalid address format');
     });
 
     test('validates Ripple address', () => {
@@ -1417,6 +1479,10 @@ describe('Utility Functions', () => {
         expect(result.isValid).toBe(expected);
       });
     });
+
+  test('returns false for non-hex inputs', () => {
+    expect(validateEVMChecksum('0x123' as any)).toBe(false);
+  });
   });
 });
 

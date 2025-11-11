@@ -8,12 +8,22 @@ interface NetworkInfo {
   metadata?: Record<string, any>;
 }
 
+interface NsDomainConfig {
+  domain: string;
+  maxTotalLength?: number;
+  maxLabelLength?: number;
+  emojiAllowed?: boolean;
+}
+
+type NsDomainEntry = string | NsDomainConfig;
+type NormalizedNsDomainConfig = NsDomainConfig & { normalizedDomain: string };
+
 interface ValidationOptions {
   network?: string[] | null; // Default: null (no exclusion); string[] (check only these networks)
   testnet?: boolean; // Default: false
   enabledLegacy?: boolean; // Default: true
   emojiAllowed?: boolean; // Default: true
-  nsDomains?: string[]; // Default: []
+  nsDomains?: NsDomainEntry[]; // Default: []
 }
 
 function bytesToHex(bytes: Uint8Array): string {
@@ -118,13 +128,90 @@ function validateOptions(options: ValidationOptions): NetworkInfo | null {
         description: 'Invalid options: nsDomains must be an array',
       };
     }
-    if (!options.nsDomains.every((d) => typeof d === 'string')) {
-      return {
-        network: null,
-        isValid: false,
-        description:
-          'Invalid options: nsDomains array must contain only strings',
-      };
+    for (const domainEntry of options.nsDomains) {
+      if (typeof domainEntry === 'string') {
+        if (!domainEntry.trim()) {
+          return {
+            network: null,
+            isValid: false,
+            description: 'Invalid options: nsDomain strings must be non-empty',
+          };
+        }
+        continue;
+      }
+
+      if (typeof domainEntry !== 'object' || domainEntry === null) {
+        return {
+          network: null,
+          isValid: false,
+          description:
+            'Invalid options: nsDomains entries must be strings or objects',
+        };
+      }
+
+      const { domain, emojiAllowed, maxLabelLength, maxTotalLength } =
+        domainEntry;
+
+      if (typeof domain !== 'string' || !domain.trim()) {
+        return {
+          network: null,
+          isValid: false,
+          description:
+            'Invalid options: nsDomain objects must include a domain string',
+        };
+      }
+
+      if (emojiAllowed !== undefined && typeof emojiAllowed !== 'boolean') {
+        return {
+          network: null,
+          isValid: false,
+          description:
+            'Invalid options: nsDomain emojiAllowed must be a boolean',
+        };
+      }
+
+      if (maxTotalLength !== undefined) {
+        if (
+          typeof maxTotalLength !== 'number' ||
+          !Number.isInteger(maxTotalLength) ||
+          maxTotalLength <= 0
+        ) {
+          return {
+            network: null,
+            isValid: false,
+            description:
+              'Invalid options: nsDomain maxTotalLength must be a positive integer',
+          };
+        }
+      }
+
+      if (maxLabelLength !== undefined) {
+        if (
+          typeof maxLabelLength !== 'number' ||
+          !Number.isInteger(maxLabelLength) ||
+          maxLabelLength <= 0
+        ) {
+          return {
+            network: null,
+            isValid: false,
+            description:
+              'Invalid options: nsDomain maxLabelLength must be a positive integer',
+          };
+        }
+      }
+
+      if (
+        maxLabelLength !== undefined &&
+        maxTotalLength !== undefined &&
+        maxLabelLength > maxTotalLength
+      ) {
+        return {
+          network: null,
+          isValid: false,
+          description:
+            'Invalid options: nsDomain maxLabelLength cannot exceed maxTotalLength',
+        };
+      }
     }
   }
 
@@ -153,8 +240,24 @@ export function validateWalletAddress(
   if (optionsError) return optionsError;
 
   // Add this line near the start of the function to ensure nsDomains exists
-  const nsDomains = options.nsDomains ?? [];
+  const nsDomainEntries = options.nsDomains ?? [];
   const allowedNetworks = options.network ?? [];
+  const globalEmojiAllowed = options.emojiAllowed ?? true;
+
+  const nsDomainConfigs: NormalizedNsDomainConfig[] = nsDomainEntries.map(
+    (entry) => {
+      const baseConfig: NsDomainConfig =
+        typeof entry === 'string' ? { domain: entry } : entry;
+      const trimmedDomain = baseConfig.domain.trim().replace(/\.+$/, '');
+      const normalizedDomain = trimmedDomain.toLowerCase();
+
+      return {
+        ...baseConfig,
+        domain: trimmedDomain,
+        normalizedDomain,
+      };
+    },
+  );
 
   // Handle empty or invalid input
   if (!address || typeof address !== 'string') {
@@ -168,41 +271,48 @@ export function validateWalletAddress(
   // For browser compatibility, we need to handle Buffer-less validation
   try {
     // NS Domain validation (check before other validations)
-    if (nsDomains.length > 0) {
+    if (nsDomainConfigs.length > 0) {
       // Only check if nsDomains are provided
       // Trim the address and remove trailing dots for domain matching
       const addressForMatching = address
         .trim()
         .replace(/\.+$/, '')
         .toLowerCase();
-      const matchedDomain = nsDomains.find((domain) =>
-        addressForMatching.endsWith('.' + domain.toLowerCase()),
-      );
+      const matchedDomainConfig = nsDomainConfigs.find((config) => {
+        const normalizedDomain = config.normalizedDomain;
+        return (
+          addressForMatching === normalizedDomain ||
+          addressForMatching.endsWith('.' + normalizedDomain)
+        );
+      });
 
-      if (matchedDomain) {
+      if (matchedDomainConfig) {
         const baseResponse = {
           network: 'ns' as const,
           isValid: false,
           description: 'Invalid NS domain format',
         };
 
+        const maxTotalLength = matchedDomainConfig.maxTotalLength ?? 255;
+        const maxLabelLength = matchedDomainConfig.maxLabelLength ?? 63;
+        const emojiAllowedForDomain =
+          matchedDomainConfig.emojiAllowed ?? globalEmojiAllowed;
+
         // First check total length (max 255 characters including dots)
-        if (addressForMatching.length > 255) {
+        if (addressForMatching.length > maxTotalLength) {
           return {
             ...baseResponse,
-            description:
-              'NS domain exceeds maximum total length of 255 characters',
+            description: `NS domain exceeds maximum total length of ${maxTotalLength} characters`,
           };
         }
 
         // Then check individual label lengths (max 63 characters)
         const labels = addressForMatching.split('.');
         for (const label of labels) {
-          if (label.length > 63) {
+          if (label.length > maxLabelLength) {
             return {
               ...baseResponse,
-              description:
-                'NS domain label exceeds maximum length of 63 characters',
+              description: `NS domain label exceeds maximum length of ${maxLabelLength} characters`,
             };
           }
         }
@@ -233,24 +343,33 @@ export function validateWalletAddress(
 
         // Check emoji allowance
         const containsEmojis = /\p{Extended_Pictographic}/u.test(address);
-        if (containsEmojis && options.emojiAllowed === false) {
+        if (containsEmojis && emojiAllowedForDomain === false) {
+          const emojiDisabledMessage =
+            matchedDomainConfig.emojiAllowed !== undefined
+              ? `Emoji characters are disabled for NS domain ${matchedDomainConfig.domain}`
+              : 'Emoji characters are disabled in NS domains';
           return {
             ...baseResponse,
-            description: 'Emoji characters are disabled in NS domains',
+            description: emojiDisabledMessage,
           };
         }
 
         // If we get here, the domain is valid
-        const isSubdomain = address.split('.').length > 2;
+        const domainLabelCount =
+          matchedDomainConfig.normalizedDomain.split('.').length;
+        const isSubdomain = labels.length - domainLabelCount > 1;
 
         return {
           network: 'ns',
           isValid: true,
           description: 'Name Service domain',
           metadata: {
-            format: matchedDomain,
+            format: matchedDomainConfig.domain,
             isSubdomain,
             isEmoji: containsEmojis,
+            maxTotalLength,
+            maxLabelLength,
+            emojiAllowed: emojiAllowedForDomain,
           },
         };
       }
