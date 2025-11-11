@@ -1480,9 +1480,9 @@ describe('Utility Functions', () => {
       });
     });
 
-  test('returns false for non-hex inputs', () => {
-    expect(validateEVMChecksum('0x123' as any)).toBe(false);
-  });
+    test('returns false for non-hex inputs', () => {
+      expect(validateEVMChecksum('0x123' as any)).toBe(false);
+    });
   });
 });
 
