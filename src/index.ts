@@ -357,7 +357,12 @@ export function validateWalletAddress(
         // If we get here, the domain is valid
         const domainLabelCount =
           matchedDomainConfig.normalizedDomain.split('.').length;
-        const isSubdomain = labels.length - domainLabelCount > 1;
+        // For single-level TLDs (e.g., 'eth'), need >1 extra labels to be a subdomain
+        // For multi-level domains (e.g., 'vitalik.eth'), need >0 extra labels
+        const isSubdomain =
+          domainLabelCount === 1
+            ? labels.length - domainLabelCount > 1
+            : labels.length - domainLabelCount > 0;
 
         return {
           network: 'ns',

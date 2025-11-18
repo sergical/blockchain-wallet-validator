@@ -248,6 +248,30 @@ describe('validateWalletAddress', () => {
       expect(enabledEmojiResult.metadata?.isEmoji).toBe(true);
       expect(enabledEmojiResult.metadata?.emojiAllowed).toBe(true);
     });
+
+    test('correctly detects subdomain for multi-level domain configs', () => {
+      // Test with multi-level domain configuration (e.g., 'vitalik.eth')
+      const rootResult = validateWalletAddress('vitalik.eth', {
+        nsDomains: [{ domain: 'vitalik.eth' }],
+      });
+      expect(rootResult.network).toBe('ns');
+      expect(rootResult.isValid).toBe(true);
+      expect(rootResult.metadata?.isSubdomain).toBe(false);
+
+      const subdomainResult = validateWalletAddress('wallet.vitalik.eth', {
+        nsDomains: [{ domain: 'vitalik.eth' }],
+      });
+      expect(subdomainResult.network).toBe('ns');
+      expect(subdomainResult.isValid).toBe(true);
+      expect(subdomainResult.metadata?.isSubdomain).toBe(true);
+
+      const deepSubdomainResult = validateWalletAddress('test.wallet.vitalik.eth', {
+        nsDomains: [{ domain: 'vitalik.eth' }],
+      });
+      expect(deepSubdomainResult.network).toBe('ns');
+      expect(deepSubdomainResult.isValid).toBe(true);
+      expect(deepSubdomainResult.metadata?.isSubdomain).toBe(true);
+    });
   });
 
   describe('Solana Addresses', () => {
