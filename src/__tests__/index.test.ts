@@ -265,9 +265,12 @@ describe('validateWalletAddress', () => {
       expect(subdomainResult.isValid).toBe(true);
       expect(subdomainResult.metadata?.isSubdomain).toBe(true);
 
-      const deepSubdomainResult = validateWalletAddress('test.wallet.vitalik.eth', {
-        nsDomains: [{ domain: 'vitalik.eth' }],
-      });
+      const deepSubdomainResult = validateWalletAddress(
+        'test.wallet.vitalik.eth',
+        {
+          nsDomains: [{ domain: 'vitalik.eth' }],
+        },
+      );
       expect(deepSubdomainResult.network).toBe('ns');
       expect(deepSubdomainResult.isValid).toBe(true);
       expect(deepSubdomainResult.metadata?.isSubdomain).toBe(true);
