@@ -87,6 +87,27 @@ console.log(nsResult);
 //   }
 // }
 
+// Validate a Core (ICAN) address
+const coreResult = validateWalletAddress(
+  'cb7147879011ea207df5b35a24ca6f0859dcfb145999',
+  { network: ['xcb'] },
+);
+console.log(coreResult);
+// {
+//   network: 'xcb',
+//   isValid: true,
+//   description: 'ICAN address for Core blockchain networks',
+//   metadata: {
+//     format: 'ican',
+//     isChecksumValid: true,
+//     codename: 'Mainnet',
+//     isTestnet: false,
+//     isEnterprise: false,
+//     printFormat: 'CB71\u00A04787\u00A09011\u00A0EA20\u00A07DF5\u00A0B35A\u00A024CA\u00A06F08\u00A059DC\u00A0FB14\u00A05999',
+//     electronicFormat: 'CB7147879011EA207DF5B35A24CA6F0859DCFB145999'
+//   }
+// }
+
 // Validate with multiple options
 const result = validateWalletAddress(
   'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
@@ -121,8 +142,13 @@ Validates a blockchain wallet address and returns information about the network 
   - `network` (string[] | null): Networks to validate against. Default: null (validates all networks). Example: `['btc', 'eth']`
   - `testnet` (boolean): Whether to validate testnet addresses. Default: false
   - `enabledLegacy` (boolean): Whether to validate legacy address formats. Default: true
-  - `emojiAllowed` (boolean): Whether to allow emoji characters in NS domains. Default: true
-  - `nsDomains` (string[]): List of Name Service domains to validate against. Default: `[]`
+  - `emojiAllowed` (boolean): Global default for allowing emoji characters in NS domains. Default: true; can be overridden per domain.
+  - `nsDomains` (Array<string | NsDomainConfig>): List of Name Service domains (or domain-specific configuration objects) to validate against. Default: `[]`
+    - `NsDomainConfig` structure:
+      - `domain` (string, required): Domain suffix to validate (e.g. `'eth'`, `'sol'`)
+      - `maxTotalLength` (number, optional): Custom maximum total domain length (default: 255)
+      - `maxLabelLength` (number, optional): Custom maximum label length (default: 63)
+      - `emojiAllowed` (boolean, optional): Override for emoji allowance on this domain
 
 #### Returns
 
