@@ -1,8 +1,8 @@
 # Blockchain Wallet Validator
 
 [![npm version](https://badge.fury.io/js/blockchain-wallet-validator.svg)](https://badge.fury.io/js/blockchain-wallet-validator)
-[![License: CORE](https://img.shields.io/badge/License-CORE-yellow)](LICENSE)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/blockchain-wallet-validator)](https://bundlephobia.com/package/blockchain-wallet-validator)
+[![License: CORE](https://img.shields.io/badge/License-CORE-yellow.svg)](LICENSE)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/blockchain-wallet-validator.svg)](https://bundlephobia.com/package/blockchain-wallet-validator)
 [![Test Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/sergical/blockchain-wallet-validator)
 [![codecov](https://codecov.io/github/sergical/blockchain-wallet-validator/graph/badge.svg)](https://github.com/sergical/blockchain-wallet-validator)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
