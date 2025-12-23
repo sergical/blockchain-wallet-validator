@@ -1650,3 +1650,185 @@ describe('Cross-Network Validation', () => {
     });
   });
 });
+
+describe('Coverage Gap Tests', () => {
+  describe('Options Validation Errors', () => {
+    test('rejects network array with non-string values', () => {
+      const result = validateWalletAddress(
+        '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
+        {
+          network: ['evm', 123 as any],
+        },
+      );
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'network array must contain only strings',
+      );
+    });
+
+    test('rejects invalid enabledLegacy type', () => {
+      const result = validateWalletAddress(
+        '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
+        {
+          enabledLegacy: 'yes' as any,
+        },
+      );
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain('enabledLegacy must be a boolean');
+    });
+
+    test('rejects invalid emojiAllowed type', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: ['eth'],
+        emojiAllowed: 'yes' as any,
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain('emojiAllowed must be a boolean');
+    });
+
+    test('rejects empty nsDomain string', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: ['eth', ''],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'nsDomain strings must be non-empty',
+      );
+    });
+
+    test('rejects nsDomains entry that is not string or object', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: ['eth', 123 as any],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'nsDomains entries must be strings or objects',
+      );
+    });
+
+    test('rejects nsDomain object without domain string', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: [{ maxLabelLength: 10 } as any],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'nsDomain objects must include a domain string',
+      );
+    });
+
+    test('rejects nsDomain emojiAllowed non-boolean', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: [{ domain: 'eth', emojiAllowed: 'yes' as any }],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'nsDomain emojiAllowed must be a boolean',
+      );
+    });
+
+    test('rejects invalid maxTotalLength (non-positive)', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: [{ domain: 'eth', maxTotalLength: 0 }],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'maxTotalLength must be a positive integer',
+      );
+    });
+
+    test('rejects invalid maxTotalLength (non-integer)', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: [{ domain: 'eth', maxTotalLength: 10.5 }],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'maxTotalLength must be a positive integer',
+      );
+    });
+  });
+
+  describe('NS Domain Config Validation', () => {
+    test('rejects invalid maxLabelLength (non-positive)', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: [{ domain: 'eth', maxLabelLength: 0 }],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'maxLabelLength must be a positive integer',
+      );
+    });
+
+    test('rejects invalid maxLabelLength (negative)', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: [{ domain: 'eth', maxLabelLength: -5 }],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'maxLabelLength must be a positive integer',
+      );
+    });
+
+    test('rejects invalid maxLabelLength (non-integer)', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: [{ domain: 'eth', maxLabelLength: 10.5 }],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'maxLabelLength must be a positive integer',
+      );
+    });
+
+    test('rejects maxLabelLength greater than maxTotalLength', () => {
+      const result = validateWalletAddress('test.eth', {
+        nsDomains: [{ domain: 'eth', maxLabelLength: 100, maxTotalLength: 50 }],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.description).toContain(
+        'maxLabelLength cannot exceed maxTotalLength',
+      );
+    });
+  });
+
+  describe('ICAN Testnet Addresses', () => {
+    test('rejects ICAN testnet address (xab) when testnet is disabled', () => {
+      const address = 'ab792215c43fc213c02182c8389f2bc32408e2c50922';
+      const result = validateWalletAddress(address, { testnet: false });
+      expect(result.network).toBe('xab');
+      expect(result.isValid).toBe(false);
+      expect(result.description).toBe('Testnet address not allowed');
+    });
+  });
+
+  describe('Cardano Stake Addresses', () => {
+    test('validates Cardano stake mainnet address', () => {
+      const address =
+        'stake1uyehkck0lajq8gr28t9uxnuvgcqrc6070x3k9r8048z8y5gh6ffgw';
+      const result = validateWalletAddress(address);
+      expect(result.network).toBe('ada');
+      expect(result.isValid).toBe(true);
+      expect(result.description).toBe('Cardano stake address');
+      expect(result.metadata?.type).toBe('stake');
+      expect(result.metadata?.isTestnet).toBe(false);
+    });
+
+    test('rejects Cardano stake testnet address when testnet is disabled', () => {
+      const address =
+        'stake_test1uqnf58xmqyqvxf93d3d92kav53d0zgyc6zlt927zpqy2v9cyvwl7a';
+      const result = validateWalletAddress(address, { testnet: false });
+      expect(result.network).toBe('ada');
+      expect(result.isValid).toBe(false);
+      expect(result.description).toBe('Testnet address not allowed');
+    });
+
+    test('validates Cardano stake testnet address when testnet is enabled', () => {
+      const address =
+        'stake_test1uqnf58xmqyqvxf93d3d92kav53d0zgyc6zlt927zpqy2v9cyvwl7a';
+      const result = validateWalletAddress(address, { testnet: true });
+      expect(result.network).toBe('ada');
+      expect(result.isValid).toBe(true);
+      expect(result.description).toBe('Cardano stake testnet address');
+      expect(result.metadata?.type).toBe('stake');
+      expect(result.metadata?.isTestnet).toBe(true);
+    });
+  });
+});
