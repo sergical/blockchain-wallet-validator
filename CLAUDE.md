@@ -156,3 +156,16 @@ The codebase uses TypeScript strict mode. Key interfaces:
 - `NetworkInfo` - Validation result structure
 
 Both are exported from the main entry point.
+
+## Publishing
+
+The package uses [npm trusted publishers](https://docs.npmjs.com/trusted-publishers) for secure OIDC-based publishing (no tokens required).
+
+**Release process:**
+1. Update version in `package.json`
+2. Update `CHANGELOG.md` with release notes
+3. Commit changes to `main`
+4. Create a GitHub release with tag `vX.Y.Z`
+5. The `publish.yml` workflow runs automatically and publishes to npm
+
+**Workflow location:** `.github/workflows/publish.yml`

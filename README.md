@@ -233,7 +233,17 @@ Licensed under the [CORE License](LICENSE).
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Publishing
+
+This package uses [npm trusted publishers](https://docs.npmjs.com/trusted-publishers) for secure, tokenless publishing via GitHub Actions OIDC.
+
+To publish a new version:
+1. Update version in `package.json`
+2. Update `CHANGELOG.md`
+3. Create a GitHub release with tag `vX.Y.Z`
+4. The publish workflow runs automatically
 
 ## Environment
 
